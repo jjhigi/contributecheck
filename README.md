@@ -1,75 +1,106 @@
-# React + TypeScript + Vite
+# ContributeCheck
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+ContributeCheck helps developers answer one question:
 
-Currently, two official plugins are available:
+> Is this repository a good place for me to contribute?
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+It is a React, TypeScript, and Vite application that analyzes public GitHub repository data and presents contribution-focused signals in a simple, beginner-friendly interface.
 
-## React Compiler
+## Why It Exists
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+GitHub is great for finding repositories, but deciding whether a repository is a good contribution opportunity often requires checking issues, pull requests, contribution files, activity, releases, and maintainer behavior.
 
-## Expanding the ESLint configuration
+ContributeCheck is not meant to replace GitHub search. It is meant to make contribution readiness easier to evaluate from objective public data.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Current Features
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Clean landing page for repository analysis.
+- GitHub repository lookup by `owner/repository`.
+- GitHub repository lookup by full repository URL.
+- Input validation and normalization.
+- Loading and error states.
+- Basic repository details:
+  - repository name
+  - owner
+  - description
+  - primary language
+  - stars
+  - forks
+  - open issue count
+  - last updated date
+  - repository link
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Tech Stack
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- React
+- TypeScript
+- Vite
+- GitHub REST API
+- Plain CSS
 
+No backend is currently used.
+
+## Getting Started
+
+Install dependencies:
+
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Start the development server:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm run dev
 ```
+
+Open the local Vite URL shown in your terminal, usually:
+
+```text
+http://localhost:5173
+```
+
+## Available Scripts
+
+Run the development server:
+
+```bash
+npm run dev
+```
+
+Run linting:
+
+```bash
+npm run lint
+```
+
+Create a production build:
+
+```bash
+npm run build
+```
+
+Preview the production build:
+
+```bash
+npm run preview
+```
+
+## Project Direction
+
+ContributeCheck will be built incrementally, one small feature at a time. The project should remain simple, professional, and data-driven.
+
+Future analysis should prefer measurable GitHub data over subjective opinions whenever possible.
+
+For more detail, see:
+
+- [Project Vision](PROJECT_VISION.md)
+- [Roadmap](ROADMAP.md)
+
+## Development Notes
+
+- Do not scaffold or recreate the project.
+- Do not add dependencies unless they are clearly necessary.
+- Do not add a backend unless explicitly requested.
+- Preserve the existing visual style.
+- Keep implementations small, readable, and deterministic.
