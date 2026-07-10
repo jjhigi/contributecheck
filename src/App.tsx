@@ -16,10 +16,34 @@ type GitHubRepository = {
   html_url: string
 }
 
+type GitHubCommunityProfile = {
+  files?: {
+    code_of_conduct?: unknown | null
+    contributing?: unknown | null
+    issue_template?: unknown | null
+    pull_request_template?: unknown | null
+  }
+}
+
+type CommunityHealthFileStates = {
+  codeOfConduct: boolean
+  contributing: boolean
+  issueTemplates: boolean
+  pullRequestTemplate: boolean
+}
+
+type CommunityHealth =
+  | { status: 'available'; files: CommunityHealthFileStates }
+  | { status: 'unavailable' }
+
 type LookupState =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'success'; repository: GitHubRepository }
+  | {
+      status: 'success'
+      repository: GitHubRepository
+      communityHealth: CommunityHealth
+    }
   | { status: 'error'; message: string }
 
 const numberFormatter = new Intl.NumberFormat('en-US')
@@ -88,7 +112,13 @@ function App() {
       }
 
       const repositoryData = (await response.json()) as GitHubRepository
-      setLookupState({ status: 'success', repository: repositoryData })
+      const communityHealth = await fetchCommunityHealth(owner, repository)
+
+      setLookupState({
+        status: 'success',
+        repository: repositoryData,
+        communityHealth,
+      })
     } catch {
       setLookupState({
         status: 'error',
@@ -138,7 +168,9 @@ function App() {
             )}
 
             {lookupState.status === 'loading' && (
-              <p className="status-message">Looking up repository details...</p>
+              <p className="status-message">
+                Looking up repository details and contribution signals...
+              </p>
             )}
 
             {lookupState.status === 'error' && (
@@ -146,7 +178,10 @@ function App() {
             )}
 
             {lookupState.status === 'success' && (
-              <RepositoryResults repository={lookupState.repository} />
+              <RepositoryResults
+                repository={lookupState.repository}
+                communityHealth={lookupState.communityHealth}
+              />
             )}
           </div>
         </div>
@@ -155,10 +190,48 @@ function App() {
   )
 }
 
+async function fetchCommunityHealth(
+  owner: string,
+  repository: string,
+): Promise<CommunityHealth> {
+  try {
+    const response = await fetch(
+      `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}/community/profile`,
+      {
+        headers: {
+          Accept: 'application/vnd.github+json',
+        },
+      },
+    )
+
+    if (!response.ok) {
+      return { status: 'unavailable' }
+    }
+
+    const communityProfile = (await response.json()) as GitHubCommunityProfile
+
+    return {
+      status: 'available',
+      files: {
+        codeOfConduct: Boolean(communityProfile.files?.code_of_conduct),
+        contributing: Boolean(communityProfile.files?.contributing),
+        issueTemplates: Boolean(communityProfile.files?.issue_template),
+        pullRequestTemplate: Boolean(
+          communityProfile.files?.pull_request_template,
+        ),
+      },
+    }
+  } catch {
+    return { status: 'unavailable' }
+  }
+}
+
 function RepositoryResults({
   repository,
+  communityHealth,
 }: {
   repository: GitHubRepository
+  communityHealth: CommunityHealth
 }) {
   return (
     <article className="repository-results">
@@ -195,6 +268,8 @@ function RepositoryResults({
         </div>
       </dl>
 
+      <CommunityHealthSection communityHealth={communityHealth} />
+
       <a
         className="repository-link"
         href={repository.html_url}
@@ -204,6 +279,67 @@ function RepositoryResults({
         View repository
       </a>
     </article>
+  )
+}
+
+function CommunityHealthSection({
+  communityHealth,
+}: {
+  communityHealth: CommunityHealth
+}) {
+  return (
+    <section className="community-health" aria-labelledby="community-health">
+      <div>
+        <p className="result-label">Contribution readiness</p>
+        <h3 id="community-health">Community health files</h3>
+        <p>
+          These files help contributors understand how to participate in a
+          project.
+        </p>
+      </div>
+
+      {communityHealth.status === 'unavailable' ? (
+        <p className="community-health-unavailable">
+          Community health data is unavailable for this repository.
+        </p>
+      ) : (
+        <dl className="community-health-list">
+          <CommunityHealthFileStatus
+            label="CONTRIBUTING.md"
+            isFound={communityHealth.files.contributing}
+          />
+          <CommunityHealthFileStatus
+            label="Code of Conduct"
+            isFound={communityHealth.files.codeOfConduct}
+          />
+          <CommunityHealthFileStatus
+            label="Issue templates"
+            isFound={communityHealth.files.issueTemplates}
+          />
+          <CommunityHealthFileStatus
+            label="Pull request template"
+            isFound={communityHealth.files.pullRequestTemplate}
+          />
+        </dl>
+      )}
+    </section>
+  )
+}
+
+function CommunityHealthFileStatus({
+  label,
+  isFound,
+}: {
+  label: string
+  isFound: boolean
+}) {
+  return (
+    <div>
+      <dt>{label}</dt>
+      <dd className={isFound ? 'health-status found' : 'health-status missing'}>
+        {isFound ? 'Found' : 'Missing'}
+      </dd>
+    </div>
   )
 }
 

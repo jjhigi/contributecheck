@@ -185,6 +185,64 @@
   overflow-wrap: anywhere;
 }
 
+.community-health {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+
+.community-health h3 {
+  margin: 4px 0 8px;
+  color: var(--text-h);
+  font-size: 1.2rem;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.community-health p:not(.result-label) {
+  color: var(--text);
+}
+
+.community-health-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.community-health-list div {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.community-health-list dt {
+  color: var(--text-h);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.community-health-list dd {
+  margin: 6px 0 0;
+}
+
+.health-status {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.health-status.found {
+  color: var(--success);
+}
+
+.health-status.missing,
+.community-health-unavailable {
+  color: var(--muted);
+}
+
 .repository-link {
   align-self: flex-start;
   border-radius: 8px;
@@ -239,6 +297,10 @@
   }
 
   .repository-details {
+    grid-template-columns: 1fr;
+  }
+
+  .community-health-list {
     grid-template-columns: 1fr;
   }
 
