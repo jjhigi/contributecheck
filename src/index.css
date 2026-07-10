@@ -9,6 +9,7 @@
   --accent-strong: #1d4ed8;
   --accent-soft: rgba(37, 99, 235, 0.16);
   --danger: #b42318;
+  --success: #067647;
   --shadow: 0 14px 28px rgba(16, 24, 39, 0.12);
   --card-shadow: 0 18px 44px rgba(16, 24, 39, 0.08);
   --sans:
@@ -36,6 +37,7 @@
     --accent-strong: #0ea5e9;
     --accent-soft: rgba(56, 189, 248, 0.18);
     --danger: #fca5a5;
+    --success: #86efac;
     --shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
     --card-shadow: 0 18px 44px rgba(0, 0, 0, 0.22);
   }
