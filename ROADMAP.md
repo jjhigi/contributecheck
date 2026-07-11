@@ -46,7 +46,11 @@ Goal: Add objective activity and maintenance metrics that help users evaluate wh
 
 Status:
 
-- Planned
+- Repository activity snapshot: complete
+- Broader repository health metrics: planned
+- Activity trends: planned
+- Release history: planned
+- Broader commit activity analysis: planned
 
 ## Phase 4: Contribution Workflow Analysis
 
@@ -81,6 +85,7 @@ Status:
 The current implementation provides repository details, community health file
 signals, good first issue detection, and a basic snapshot of open pull
 requests. It also provides an initial framework signal for supported direct
-dependencies in a repository's root `package.json`. The next recommended
-milestone is expanding framework detection to monorepos and additional
-ecosystems before broader repository health metrics.
+dependencies in a repository's root `package.json`, plus a snapshot of recent
+commits. The next recommended milestone is broader repository health metrics,
+beginning with activity trends or release history. Framework detection for
+monorepos and additional ecosystems remains planned.
