@@ -142,6 +142,9 @@
 
 .result-section {
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
@@ -150,14 +153,8 @@
   box-shadow: var(--card-shadow);
 }
 
-.repository-summary {
-  padding-bottom: 22px;
-  margin-bottom: 22px;
-  border-bottom: 1px solid var(--border);
-}
-
 .repository-summary h2 {
-  margin: 4px 0 8px;
+  margin: 14px 0 8px;
   color: var(--text-h);
   font-size: 1.5rem;
   line-height: 1.2;
@@ -203,16 +200,9 @@
   overflow-wrap: anywhere;
 }
 
-.community-health,
-.good-first-issues {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 .community-health h3,
 .good-first-issues h3 {
-  margin: 4px 0 8px;
+  margin: 14px 0 8px;
   color: var(--text-h);
   font-size: 1.2rem;
   line-height: 1.25;
@@ -266,18 +256,31 @@
   color: var(--muted);
 }
 
+.repository-details,
+.community-health-list,
+.community-health-unavailable,
+.good-first-issues-muted {
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
 .good-first-issue-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
   padding: 0;
   margin: 0;
   list-style: none;
 }
 
 .good-first-issue-list li {
-  padding-top: 10px;
+  padding-top: 20px;
+  margin-top: 20px;
   border-top: 1px solid var(--border);
+}
+
+.good-first-issue-list li:first-child {
+  margin-top: 0;
 }
 
 .good-first-issue-list a {
@@ -308,7 +311,6 @@
 .repository-link {
   align-self: flex-start;
   display: inline-flex;
-  margin-top: 22px;
   border-radius: 8px;
   background: var(--accent-soft);
   color: var(--accent-strong);

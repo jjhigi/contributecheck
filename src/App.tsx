@@ -1,57 +1,15 @@
 import { useState, type FormEvent } from 'react'
 import './App.css'
+import {
+  fetchCommunityHealth,
+  fetchGoodFirstIssues,
+  fetchRepository,
+  type CommunityHealth,
+  type GitHubRepository,
+  type GoodFirstIssues,
+  type RepositoryFetchResult,
+} from './githubApi'
 import { parseRepositoryInput } from './repositoryInput'
-
-type GitHubRepository = {
-  name: string
-  owner: {
-    login: string
-  }
-  description: string | null
-  language: string | null
-  stargazers_count: number
-  forks_count: number
-  open_issues_count: number
-  updated_at: string
-  html_url: string
-}
-
-type GitHubCommunityProfile = {
-  files?: {
-    code_of_conduct?: unknown | null
-    contributing?: unknown | null
-    issue_template?: unknown | null
-    pull_request_template?: unknown | null
-  }
-}
-
-type GitHubIssue = {
-  number: number
-  title: string
-  html_url: string
-  pull_request?: unknown
-}
-
-type CommunityHealthFileStates = {
-  codeOfConduct: boolean
-  contributing: boolean
-  issueTemplates: boolean
-  pullRequestTemplate: boolean
-}
-
-type CommunityHealth =
-  | { status: 'available'; files: CommunityHealthFileStates }
-  | { status: 'unavailable' }
-
-type GoodFirstIssue = {
-  number: number
-  title: string
-  htmlUrl: string
-}
-
-type GoodFirstIssues =
-  | { status: 'available'; issues: GoodFirstIssue[] }
-  | { status: 'unavailable' }
 
 type LookupState =
   | { status: 'idle' }
@@ -92,61 +50,27 @@ function App() {
     setRepositoryInput(`${owner}/${repository}`)
     setLookupState({ status: 'loading' })
 
-    try {
-      const response = await fetch(
-        `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}`,
-        {
-          headers: {
-            Accept: 'application/vnd.github+json',
-          },
-        },
-      )
+    const repositoryResult = await fetchRepository(owner, repository)
 
-      if (response.status === 404) {
-        setLookupState({
-          status: 'error',
-          message: 'Repository not found. Check the owner and repository name.',
-        })
-        return
-      }
-
-      if (response.status === 403 || response.status === 429) {
-        const remainingRequests = response.headers.get('x-ratelimit-remaining')
-        const message =
-          remainingRequests === '0'
-            ? 'GitHub API rate limit reached. Please wait a bit and try again.'
-            : 'GitHub could not complete this request right now. Please try again later.'
-
-        setLookupState({ status: 'error', message })
-        return
-      }
-
-      if (!response.ok) {
-        setLookupState({
-          status: 'error',
-          message: 'GitHub request failed. Please try again in a moment.',
-        })
-        return
-      }
-
-      const repositoryData = (await response.json()) as GitHubRepository
-      const [communityHealth, goodFirstIssues] = await Promise.all([
-        fetchCommunityHealth(owner, repository),
-        fetchGoodFirstIssues(owner, repository),
-      ])
-
-      setLookupState({
-        status: 'success',
-        repository: repositoryData,
-        communityHealth,
-        goodFirstIssues,
-      })
-    } catch {
+    if (repositoryResult.status !== 'success') {
       setLookupState({
         status: 'error',
-        message: 'Unable to reach GitHub. Check your connection and try again.',
+        message: getRepositoryLookupErrorMessage(repositoryResult.status),
       })
+      return
     }
+
+    const [communityHealth, goodFirstIssues] = await Promise.all([
+      fetchCommunityHealth(owner, repository),
+      fetchGoodFirstIssues(owner, repository),
+    ])
+
+    setLookupState({
+      status: 'success',
+      repository: repositoryResult.repository,
+      communityHealth,
+      goodFirstIssues,
+    })
   }
 
   return (
@@ -220,71 +144,20 @@ function App() {
   )
 }
 
-async function fetchCommunityHealth(
-  owner: string,
-  repository: string,
-): Promise<CommunityHealth> {
-  try {
-    const response = await fetch(
-      `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}/community/profile`,
-      {
-        headers: {
-          Accept: 'application/vnd.github+json',
-        },
-      },
-    )
-
-    if (!response.ok) {
-      return { status: 'unavailable' }
-    }
-
-    const communityProfile = (await response.json()) as GitHubCommunityProfile
-
-    return {
-      status: 'available',
-      files: {
-        codeOfConduct: Boolean(communityProfile.files?.code_of_conduct),
-        contributing: Boolean(communityProfile.files?.contributing),
-        issueTemplates: Boolean(communityProfile.files?.issue_template),
-        pullRequestTemplate: Boolean(
-          communityProfile.files?.pull_request_template,
-        ),
-      },
-    }
-  } catch {
-    return { status: 'unavailable' }
-  }
-}
-
-async function fetchGoodFirstIssues(
-  owner: string,
-  repository: string,
-): Promise<GoodFirstIssues> {
-  try {
-    const response = await fetch(
-      `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}/issues?state=open&labels=${encodeURIComponent('good first issue')}&per_page=5`,
-      {
-        headers: {
-          Accept: 'application/vnd.github+json',
-        },
-      },
-    )
-
-    if (!response.ok) {
-      return { status: 'unavailable' }
-    }
-
-    const issues = ((await response.json()) as GitHubIssue[])
-      .filter((issue) => !issue.pull_request)
-      .map((issue) => ({
-        number: issue.number,
-        title: issue.title,
-        htmlUrl: issue.html_url,
-      }))
-
-    return { status: 'available', issues }
-  } catch {
-    return { status: 'unavailable' }
+function getRepositoryLookupErrorMessage(
+  status: Exclude<RepositoryFetchResult['status'], 'success'>,
+) {
+  switch (status) {
+    case 'not-found':
+      return 'Repository not found. Check the owner and repository name.'
+    case 'rate-limited':
+      return 'GitHub API rate limit reached. Please wait a bit and try again.'
+    case 'forbidden':
+      return 'GitHub could not complete this request right now. Please try again later.'
+    case 'failed':
+      return 'GitHub request failed. Please try again in a moment.'
+    case 'network-error':
+      return 'Unable to reach GitHub. Check your connection and try again.'
   }
 }
 
