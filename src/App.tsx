@@ -25,6 +25,13 @@ type GitHubCommunityProfile = {
   }
 }
 
+type GitHubIssue = {
+  number: number
+  title: string
+  html_url: string
+  pull_request?: unknown
+}
+
 type CommunityHealthFileStates = {
   codeOfConduct: boolean
   contributing: boolean
@@ -36,6 +43,16 @@ type CommunityHealth =
   | { status: 'available'; files: CommunityHealthFileStates }
   | { status: 'unavailable' }
 
+type GoodFirstIssue = {
+  number: number
+  title: string
+  htmlUrl: string
+}
+
+type GoodFirstIssues =
+  | { status: 'available'; issues: GoodFirstIssue[] }
+  | { status: 'unavailable' }
+
 type LookupState =
   | { status: 'idle' }
   | { status: 'loading' }
@@ -43,6 +60,7 @@ type LookupState =
       status: 'success'
       repository: GitHubRepository
       communityHealth: CommunityHealth
+      goodFirstIssues: GoodFirstIssues
     }
   | { status: 'error'; message: string }
 
@@ -112,12 +130,16 @@ function App() {
       }
 
       const repositoryData = (await response.json()) as GitHubRepository
-      const communityHealth = await fetchCommunityHealth(owner, repository)
+      const [communityHealth, goodFirstIssues] = await Promise.all([
+        fetchCommunityHealth(owner, repository),
+        fetchGoodFirstIssues(owner, repository),
+      ])
 
       setLookupState({
         status: 'success',
         repository: repositoryData,
         communityHealth,
+        goodFirstIssues,
       })
     } catch {
       setLookupState({
@@ -162,7 +184,14 @@ function App() {
             </button>
           </form>
 
-          <div className="results-card" aria-live="polite">
+          <div
+            className={
+              lookupState.status === 'success'
+                ? 'results-card results-stack'
+                : 'results-card'
+            }
+            aria-live="polite"
+          >
             {lookupState.status === 'idle' && (
               <p>Repository analysis will appear here.</p>
             )}
@@ -181,6 +210,7 @@ function App() {
               <RepositoryResults
                 repository={lookupState.repository}
                 communityHealth={lookupState.communityHealth}
+                goodFirstIssues={lookupState.goodFirstIssues}
               />
             )}
           </div>
@@ -226,59 +256,140 @@ async function fetchCommunityHealth(
   }
 }
 
+async function fetchGoodFirstIssues(
+  owner: string,
+  repository: string,
+): Promise<GoodFirstIssues> {
+  try {
+    const response = await fetch(
+      `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}/issues?state=open&labels=${encodeURIComponent('good first issue')}&per_page=5`,
+      {
+        headers: {
+          Accept: 'application/vnd.github+json',
+        },
+      },
+    )
+
+    if (!response.ok) {
+      return { status: 'unavailable' }
+    }
+
+    const issues = ((await response.json()) as GitHubIssue[])
+      .filter((issue) => !issue.pull_request)
+      .map((issue) => ({
+        number: issue.number,
+        title: issue.title,
+        htmlUrl: issue.html_url,
+      }))
+
+    return { status: 'available', issues }
+  } catch {
+    return { status: 'unavailable' }
+  }
+}
+
 function RepositoryResults({
   repository,
   communityHealth,
+  goodFirstIssues,
 }: {
   repository: GitHubRepository
   communityHealth: CommunityHealth
+  goodFirstIssues: GoodFirstIssues
 }) {
   return (
     <article className="repository-results">
-      <div className="repository-summary">
-        <p className="result-label">Repository</p>
-        <h2>{repository.name}</h2>
-        <p>{repository.description || 'No description provided.'}</p>
-      </div>
+      <section className="result-section repository-card">
+        <div className="repository-summary">
+          <p className="result-label">Repository</p>
+          <h2>{repository.name}</h2>
+          <p>{repository.description || 'No description provided.'}</p>
+        </div>
 
-      <dl className="repository-details">
-        <div>
-          <dt>Owner</dt>
-          <dd>{repository.owner.login}</dd>
-        </div>
-        <div>
-          <dt>Language</dt>
-          <dd>{repository.language || 'Not specified'}</dd>
-        </div>
-        <div>
-          <dt>Stars</dt>
-          <dd>{numberFormatter.format(repository.stargazers_count)}</dd>
-        </div>
-        <div>
-          <dt>Forks</dt>
-          <dd>{numberFormatter.format(repository.forks_count)}</dd>
-        </div>
-        <div>
-          <dt>Open issues</dt>
-          <dd>{numberFormatter.format(repository.open_issues_count)}</dd>
-        </div>
-        <div>
-          <dt>Last updated</dt>
-          <dd>{formatDate(repository.updated_at)}</dd>
-        </div>
-      </dl>
+        <dl className="repository-details">
+          <div>
+            <dt>Owner</dt>
+            <dd>{repository.owner.login}</dd>
+          </div>
+          <div>
+            <dt>Language</dt>
+            <dd>{repository.language || 'Not specified'}</dd>
+          </div>
+          <div>
+            <dt>Stars</dt>
+            <dd>{numberFormatter.format(repository.stargazers_count)}</dd>
+          </div>
+          <div>
+            <dt>Forks</dt>
+            <dd>{numberFormatter.format(repository.forks_count)}</dd>
+          </div>
+          <div>
+            <dt>Open issues</dt>
+            <dd>{numberFormatter.format(repository.open_issues_count)}</dd>
+          </div>
+          <div>
+            <dt>Last updated</dt>
+            <dd>{formatDate(repository.updated_at)}</dd>
+          </div>
+        </dl>
+
+        <a
+          className="repository-link"
+          href={repository.html_url}
+          target="_blank"
+          rel="noreferrer"
+        >
+          View repository
+        </a>
+      </section>
 
       <CommunityHealthSection communityHealth={communityHealth} />
 
-      <a
-        className="repository-link"
-        href={repository.html_url}
-        target="_blank"
-        rel="noreferrer"
-      >
-        View repository
-      </a>
+      <GoodFirstIssuesSection goodFirstIssues={goodFirstIssues} />
     </article>
+  )
+}
+
+function GoodFirstIssuesSection({
+  goodFirstIssues,
+}: {
+  goodFirstIssues: GoodFirstIssues
+}) {
+  return (
+    <section
+      className="result-section good-first-issues"
+      aria-labelledby="good-first-issues"
+    >
+      <div>
+        <p className="result-label">Starter issues</p>
+        <h3 id="good-first-issues">Good first issues</h3>
+        <p>
+          Open issues with GitHub&apos;s standard good first issue label can be
+          useful starting points for new contributors.
+        </p>
+      </div>
+
+      {goodFirstIssues.status === 'unavailable' ? (
+        <p className="good-first-issues-muted">
+          Good first issue data is unavailable for this repository.
+        </p>
+      ) : goodFirstIssues.issues.length === 0 ? (
+        <p className="good-first-issues-muted">
+          No open good first issues found.
+        </p>
+      ) : (
+        <ul className="good-first-issue-list">
+          {goodFirstIssues.issues.map((issue) => (
+            <li key={issue.number}>
+              <a href={issue.htmlUrl} target="_blank" rel="noreferrer">
+                <span>#{issue.number}</span>
+                {issue.title}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }
 
@@ -288,7 +399,10 @@ function CommunityHealthSection({
   communityHealth: CommunityHealth
 }) {
   return (
-    <section className="community-health" aria-labelledby="community-health">
+    <section
+      className="result-section community-health"
+      aria-labelledby="community-health"
+    >
       <div>
         <p className="result-label">Contribution readiness</p>
         <h3 id="community-health">Community health files</h3>

@@ -34,6 +34,9 @@ ContributeCheck is not meant to replace GitHub search. It is meant to make contr
   - Code of Conduct
   - issue templates
   - pull request template
+- Good first issue detection:
+  - shows up to 5 open issues labeled `good first issue`
+  - links each issue to GitHub
 
 ## Tech Stack
 
@@ -109,3 +112,4 @@ For more detail, see:
 - Do not add a backend unless explicitly requested.
 - Preserve the existing visual style.
 - Keep implementations small, readable, and deterministic.
+ 
