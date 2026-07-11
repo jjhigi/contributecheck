@@ -46,9 +46,9 @@ Goal: Add objective activity and maintenance metrics that help users evaluate wh
 
 Status:
 
-- Repository activity snapshot: complete
+- Repository activity summary: complete
+- Commit activity trends, initial 12-week version: complete
 - Broader repository health metrics: planned
-- Activity trends: planned
 - Release history: planned
 - Broader commit activity analysis: planned
 
@@ -56,14 +56,14 @@ Status:
 
 Goal: Analyze pull request and contributor patterns to estimate how approachable the project is for outside contributors.
 
-- Basic open pull request snapshot
+- Pull request activity summary
 - Pull request analysis
 - Maintainer responsiveness
 - First-time contributor metrics
 
 Status:
 
-- Basic open pull request snapshot: complete
+- Pull request activity summary: complete
 - Deeper pull request analysis: planned
 - Maintainer responsiveness: planned
 - First-time contributor metrics: planned
@@ -83,9 +83,9 @@ Status:
 ## Current Direction
 
 The current implementation provides repository details, community health file
-signals, good first issue detection, and a basic snapshot of open pull
+signals, good first issue detection, and a basic summary of open pull
 requests. It also provides an initial framework signal for supported direct
-dependencies in a repository's root `package.json`, plus a snapshot of recent
-commits. The next recommended milestone is broader repository health metrics,
-beginning with activity trends or release history. Framework detection for
-monorepos and additional ecosystems remains planned.
+dependencies in a repository's root `package.json`, plus a 12-week commit
+activity trend. The next recommended milestone is another measurable
+repository health metric. Framework detection for monorepos and additional
+ecosystems remains planned, while release history is optional future work.
