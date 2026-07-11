@@ -41,6 +41,9 @@ ContributeCheck is not meant to replace GitHub search. It is meant to make contr
   - shows up to 5 open pull requests
   - shows each pull request's number, title, author, and creation date
   - links each pull request to GitHub
+- Initial framework detection:
+  - checks the repository's root `package.json`
+  - detects direct dependencies for Next.js, React, Vue, Angular, and Svelte
 
 ## Tech Stack
 

@@ -32,7 +32,8 @@ Status:
 
 - Community health files: complete
 - Good First Issue detection: complete
-- Framework detection: planned
+- Framework detection, initial root-manifest version: complete
+- Framework detection for monorepos and additional ecosystems: planned
 
 ## Phase 3: Repository Health Metrics
 
@@ -79,5 +80,7 @@ Status:
 
 The current implementation provides repository details, community health file
 signals, good first issue detection, and a basic snapshot of open pull
-requests. The next recommended milestone is framework detection, completing
-the remaining planned work in Phase 2 before broader repository health metrics.
+requests. It also provides an initial framework signal for supported direct
+dependencies in a repository's root `package.json`. The next recommended
+milestone is expanding framework detection to monorepos and additional
+ecosystems before broader repository health metrics.

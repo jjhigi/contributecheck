@@ -2,10 +2,12 @@ import { useState, type FormEvent } from 'react'
 import './App.css'
 import {
   fetchCommunityHealth,
+  fetchFrameworkDetection,
   fetchGoodFirstIssues,
   fetchOpenPullRequests,
   fetchRepository,
   type CommunityHealth,
+  type FrameworkDetection,
   type GitHubRepository,
   type GoodFirstIssues,
   type PullRequestActivity,
@@ -19,6 +21,7 @@ type LookupState =
   | {
       status: 'success'
       repository: GitHubRepository
+      frameworkDetection: FrameworkDetection
       communityHealth: CommunityHealth
       goodFirstIssues: GoodFirstIssues
       pullRequestActivity: PullRequestActivity
@@ -63,16 +66,22 @@ function App() {
       return
     }
 
-    const [communityHealth, goodFirstIssues, pullRequestActivity] =
-      await Promise.all([
-        fetchCommunityHealth(owner, repository),
-        fetchGoodFirstIssues(owner, repository),
-        fetchOpenPullRequests(owner, repository),
-      ])
+    const [
+      frameworkDetection,
+      communityHealth,
+      goodFirstIssues,
+      pullRequestActivity,
+    ] = await Promise.all([
+      fetchFrameworkDetection(owner, repository),
+      fetchCommunityHealth(owner, repository),
+      fetchGoodFirstIssues(owner, repository),
+      fetchOpenPullRequests(owner, repository),
+    ])
 
     setLookupState({
       status: 'success',
       repository: repositoryResult.repository,
+      frameworkDetection,
       communityHealth,
       goodFirstIssues,
       pullRequestActivity,
@@ -139,6 +148,7 @@ function App() {
             {lookupState.status === 'success' && (
               <RepositoryResults
                 repository={lookupState.repository}
+                frameworkDetection={lookupState.frameworkDetection}
                 communityHealth={lookupState.communityHealth}
                 goodFirstIssues={lookupState.goodFirstIssues}
                 pullRequestActivity={lookupState.pullRequestActivity}
@@ -170,11 +180,13 @@ function getRepositoryLookupErrorMessage(
 
 function RepositoryResults({
   repository,
+  frameworkDetection,
   communityHealth,
   goodFirstIssues,
   pullRequestActivity,
 }: {
   repository: GitHubRepository
+  frameworkDetection: FrameworkDetection
   communityHealth: CommunityHealth
   goodFirstIssues: GoodFirstIssues
   pullRequestActivity: PullRequestActivity
@@ -196,6 +208,10 @@ function RepositoryResults({
           <div>
             <dt>Language</dt>
             <dd>{repository.language || 'Not specified'}</dd>
+          </div>
+          <div>
+            <dt>Framework</dt>
+            <dd>{formatFramework(frameworkDetection)}</dd>
           </div>
           <div>
             <dt>Stars</dt>
@@ -395,6 +411,17 @@ function formatDate(value: string) {
   }
 
   return dateFormatter.format(date)
+}
+
+function formatFramework(detection: FrameworkDetection) {
+  switch (detection.status) {
+    case 'detected':
+      return detection.framework
+    case 'not-detected':
+      return 'Not detected'
+    case 'unavailable':
+      return 'Unavailable'
+  }
 }
 
 export default App
