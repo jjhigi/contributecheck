@@ -10,6 +10,7 @@ type ParseRepositoryInputResult =
 const ownerPattern = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/
 const repositoryPattern = /^[A-Za-z0-9._-]{1,100}$/
 
+/** Parse and validate a GitHub repository reference from user input. */
 export function parseRepositoryInput(
   rawInput: string,
 ): ParseRepositoryInputResult {

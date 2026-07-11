@@ -28,6 +28,16 @@ type GitHubIssue = {
   pull_request?: unknown
 }
 
+type GitHubPullRequest = {
+  number: number
+  title: string
+  user?: {
+    login: string
+  } | null
+  created_at: string
+  html_url: string
+}
+
 export type CommunityHealthFileStates = {
   codeOfConduct: boolean
   contributing: boolean
@@ -49,6 +59,18 @@ export type GoodFirstIssues =
   | { status: 'available'; issues: GoodFirstIssue[] }
   | { status: 'unavailable' }
 
+export type PullRequestSummary = {
+  number: number
+  title: string
+  author: string
+  createdAt: string
+  htmlUrl: string
+}
+
+export type PullRequestActivity =
+  | { status: 'available'; pullRequests: PullRequestSummary[] }
+  | { status: 'unavailable' }
+
 export type RepositoryFetchResult =
   | { status: 'success'; repository: GitHubRepository }
   | { status: 'not-found' }
@@ -61,6 +83,7 @@ const githubHeaders = {
   Accept: 'application/vnd.github+json',
 }
 
+/** Fetch repository details and map common GitHub API failures to UI states. */
 export async function fetchRepository(
   owner: string,
   repository: string,
@@ -94,6 +117,7 @@ export async function fetchRepository(
   }
 }
 
+/** Fetch contributor-facing community health file availability. */
 export async function fetchCommunityHealth(
   owner: string,
   repository: string,
@@ -128,6 +152,7 @@ export async function fetchCommunityHealth(
   }
 }
 
+/** Fetch open issues labeled as good first issues. */
 export async function fetchGoodFirstIssues(
   owner: string,
   repository: string,
@@ -153,6 +178,39 @@ export async function fetchGoodFirstIssues(
       }))
 
     return { status: 'available', issues }
+  } catch {
+    return { status: 'unavailable' }
+  }
+}
+
+/** Fetch a small snapshot of currently open pull requests. */
+export async function fetchOpenPullRequests(
+  owner: string,
+  repository: string,
+): Promise<PullRequestActivity> {
+  try {
+    const response = await fetch(
+      `${githubRepoUrl(owner, repository)}/pulls?state=open&per_page=5`,
+      {
+        headers: githubHeaders,
+      },
+    )
+
+    if (!response.ok) {
+      return { status: 'unavailable' }
+    }
+
+    const pullRequests = (
+      (await response.json()) as GitHubPullRequest[]
+    ).map((pullRequest) => ({
+      number: pullRequest.number,
+      title: pullRequest.title,
+      author: pullRequest.user?.login || 'Unknown author',
+      createdAt: pullRequest.created_at,
+      htmlUrl: pullRequest.html_url,
+    }))
+
+    return { status: 'available', pullRequests }
   } catch {
     return { status: 'unavailable' }
   }

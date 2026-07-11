@@ -37,6 +37,10 @@ ContributeCheck is not meant to replace GitHub search. It is meant to make contr
 - Good first issue detection:
   - shows up to 5 open issues labeled `good first issue`
   - links each issue to GitHub
+- Open pull request activity:
+  - shows up to 5 open pull requests
+  - shows each pull request's number, title, author, and creation date
+  - links each pull request to GitHub
 
 ## Tech Stack
 
