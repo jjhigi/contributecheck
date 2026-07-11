@@ -38,6 +38,17 @@ type GitHubPullRequest = {
   html_url: string
 }
 
+type GitHubContentFile = {
+  content?: string
+  encoding?: string
+}
+
+type GitHubPackageManifest = {
+  dependencies?: Record<string, unknown>
+  devDependencies?: Record<string, unknown>
+  peerDependencies?: Record<string, unknown>
+}
+
 export type CommunityHealthFileStates = {
   codeOfConduct: boolean
   contributing: boolean
@@ -71,6 +82,18 @@ export type PullRequestActivity =
   | { status: 'available'; pullRequests: PullRequestSummary[] }
   | { status: 'unavailable' }
 
+export type SupportedFramework =
+  | 'Next.js'
+  | 'React'
+  | 'Vue'
+  | 'Angular'
+  | 'Svelte'
+
+export type FrameworkDetection =
+  | { status: 'detected'; framework: SupportedFramework }
+  | { status: 'not-detected' }
+  | { status: 'unavailable' }
+
 export type RepositoryFetchResult =
   | { status: 'success'; repository: GitHubRepository }
   | { status: 'not-found' }
@@ -82,6 +105,17 @@ export type RepositoryFetchResult =
 const githubHeaders = {
   Accept: 'application/vnd.github+json',
 }
+
+const frameworkDependencies: Array<{
+  framework: SupportedFramework
+  packageName: string
+}> = [
+  { framework: 'Next.js', packageName: 'next' },
+  { framework: 'React', packageName: 'react' },
+  { framework: 'Vue', packageName: 'vue' },
+  { framework: 'Angular', packageName: '@angular/core' },
+  { framework: 'Svelte', packageName: 'svelte' },
+]
 
 /** Fetch repository details and map common GitHub API failures to UI states. */
 export async function fetchRepository(
@@ -214,6 +248,73 @@ export async function fetchOpenPullRequests(
   } catch {
     return { status: 'unavailable' }
   }
+}
+
+/** Detect a supported framework from the repository's root package.json. */
+export async function fetchFrameworkDetection(
+  owner: string,
+  repository: string,
+): Promise<FrameworkDetection> {
+  try {
+    const response = await fetch(
+      `${githubRepoUrl(owner, repository)}/contents/package.json`,
+      {
+        headers: githubHeaders,
+      },
+    )
+
+    if (response.status === 404) {
+      return { status: 'not-detected' }
+    }
+
+    if (!response.ok) {
+      return { status: 'unavailable' }
+    }
+
+    const packageFile = (await response.json()) as GitHubContentFile
+
+    if (packageFile.encoding !== 'base64' || !packageFile.content) {
+      return { status: 'unavailable' }
+    }
+
+    const packageManifest = JSON.parse(
+      decodeBase64(packageFile.content),
+    ) as GitHubPackageManifest
+    const framework = detectFramework(packageManifest)
+
+    return framework
+      ? { status: 'detected', framework }
+      : { status: 'not-detected' }
+  } catch {
+    return { status: 'unavailable' }
+  }
+}
+
+function detectFramework(packageManifest: GitHubPackageManifest) {
+  if (!packageManifest || typeof packageManifest !== 'object') {
+    return null
+  }
+
+  const packageNames = [
+    ...Object.keys(packageManifest.dependencies ?? {}),
+    ...Object.keys(packageManifest.devDependencies ?? {}),
+    ...Object.keys(packageManifest.peerDependencies ?? {}),
+  ]
+
+  return (
+    frameworkDependencies.find(({ packageName }) =>
+      packageNames.includes(packageName),
+    )?.framework ?? null
+  )
+}
+
+function decodeBase64(value: string) {
+  const binaryValue = atob(value.replace(/\s/g, ''))
+  const bytes = Uint8Array.from(binaryValue, (character) =>
+    character.charCodeAt(0),
+  )
+
+  return new TextDecoder().decode(bytes)
 }
 
 function githubRepoUrl(owner: string, repository: string) {
