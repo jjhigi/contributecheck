@@ -2,12 +2,15 @@ import { useState, type FormEvent } from 'react'
 import './App.css'
 import {
   fetchCommunityHealth,
+  fetchCommitActivity,
   fetchFrameworkDetection,
   fetchGoodFirstIssues,
+  fetchLatestCommit,
   fetchOpenPullRequests,
-  fetchRecentCommits,
   fetchRepository,
   type CommunityHealth,
+  type CommitActivity,
+  type CommitActivityWeek,
   type FrameworkDetection,
   type GitHubRepository,
   type GoodFirstIssues,
@@ -28,6 +31,7 @@ type LookupState =
       goodFirstIssues: GoodFirstIssues
       pullRequestActivity: PullRequestActivity
       repositoryActivity: RepositoryActivity
+      commitActivity: CommitActivity
     }
   | { status: 'error'; message: string }
 
@@ -75,12 +79,14 @@ function App() {
       goodFirstIssues,
       pullRequestActivity,
       repositoryActivity,
+      commitActivity,
     ] = await Promise.all([
       fetchFrameworkDetection(owner, repository),
       fetchCommunityHealth(owner, repository),
       fetchGoodFirstIssues(owner, repository),
       fetchOpenPullRequests(owner, repository),
-      fetchRecentCommits(owner, repository),
+      fetchLatestCommit(owner, repository),
+      fetchCommitActivity(owner, repository),
     ])
 
     setLookupState({
@@ -91,6 +97,7 @@ function App() {
       goodFirstIssues,
       pullRequestActivity,
       repositoryActivity,
+      commitActivity,
     })
   }
 
@@ -159,6 +166,7 @@ function App() {
                 goodFirstIssues={lookupState.goodFirstIssues}
                 pullRequestActivity={lookupState.pullRequestActivity}
                 repositoryActivity={lookupState.repositoryActivity}
+                commitActivity={lookupState.commitActivity}
               />
             )}
           </div>
@@ -192,6 +200,7 @@ function RepositoryResults({
   goodFirstIssues,
   pullRequestActivity,
   repositoryActivity,
+  commitActivity,
 }: {
   repository: GitHubRepository
   frameworkDetection: FrameworkDetection
@@ -199,14 +208,26 @@ function RepositoryResults({
   goodFirstIssues: GoodFirstIssues
   pullRequestActivity: PullRequestActivity
   repositoryActivity: RepositoryActivity
+  commitActivity: CommitActivity
 }) {
   return (
     <article className="repository-results">
       <section className="result-section repository-card">
-        <div className="repository-summary">
-          <p className="result-label">Repository</p>
-          <h2>{repository.name}</h2>
-          <p>{repository.description || 'No description provided.'}</p>
+        <div className="repository-header">
+          <div className="repository-summary">
+            <p className="result-label">Repository</p>
+            <h2>{repository.name}</h2>
+            <p>{repository.description || 'No description provided.'}</p>
+          </div>
+
+          <a
+            className="repository-link"
+            href={repository.html_url}
+            target="_blank"
+            rel="noreferrer"
+          >
+            View repository
+          </a>
         </div>
 
         <dl className="repository-details">
@@ -239,33 +260,50 @@ function RepositoryResults({
             <dd>{formatDate(repository.updated_at)}</dd>
           </div>
         </dl>
-
-        <a
-          className="repository-link"
-          href={repository.html_url}
-          target="_blank"
-          rel="noreferrer"
-        >
-          View repository
-        </a>
       </section>
 
       <CommunityHealthSection communityHealth={communityHealth} />
 
       <GoodFirstIssuesSection goodFirstIssues={goodFirstIssues} />
 
-      <PullRequestActivitySection pullRequestActivity={pullRequestActivity} />
+      <PullRequestActivitySection
+        repositoryUrl={repository.html_url}
+        pullRequestActivity={pullRequestActivity}
+      />
 
-      <RepositoryActivitySection repositoryActivity={repositoryActivity} />
+      <RepositoryActivitySection
+        repositoryUrl={repository.html_url}
+        repositoryActivity={repositoryActivity}
+        commitActivity={commitActivity}
+      />
     </article>
   )
 }
 
 function RepositoryActivitySection({
+  repositoryUrl,
   repositoryActivity,
+  commitActivity,
 }: {
+  repositoryUrl: string
   repositoryActivity: RepositoryActivity
+  commitActivity: CommitActivity
 }) {
+  const latestCommit =
+    repositoryActivity.status === 'available'
+      ? repositoryActivity.latestCommit
+      : undefined
+  const weeks =
+    commitActivity.status === 'available' ? commitActivity.weeks : []
+  const recentCommitCount = weeks
+    .slice(-4)
+    .reduce((total, week) => total + week.total, 0)
+  const maxCommitCount = Math.max(
+    ...weeks.map((week) => week.total),
+    1,
+  )
+  const hasActivity = Boolean(latestCommit) || weeks.length > 0
+
   return (
     <section
       className="result-section repository-activity"
@@ -273,40 +311,112 @@ function RepositoryActivitySection({
     >
       <div>
         <p className="result-label">Repository activity</p>
-        <h3 id="repository-activity">Recent commits</h3>
+        <h3 id="repository-activity">Commit activity</h3>
         <p>
-          Recent commits provide a simple view of ongoing project activity.
+          Weekly commit totals provide a measurable view of recent project
+          activity.
         </p>
       </div>
 
-      {repositoryActivity.status === 'unavailable' ? (
+      {!hasActivity &&
+      repositoryActivity.status === 'unavailable' &&
+      commitActivity.status === 'unavailable' ? (
         <p className="repository-activity-muted">
           Commit data is unavailable for this repository.
         </p>
-      ) : repositoryActivity.commits.length === 0 ? (
+      ) : !hasActivity ? (
         <p className="repository-activity-muted">No recent commits found.</p>
       ) : (
-        <ul className="commit-list">
-          {repositoryActivity.commits.map((commit) => (
-            <li key={commit.sha}>
-              <a href={commit.htmlUrl} target="_blank" rel="noreferrer">
-                <span>{commit.sha.slice(0, 7)}</span>
-                {commit.message}
-              </a>
-              <p>
-                {commit.author} committed {formatDate(commit.committedAt)}
-              </p>
-            </li>
-          ))}
-        </ul>
+        <>
+          <dl className="repository-details repository-activity-summary">
+            <div>
+              <dt>Latest commit</dt>
+              <dd>
+                {latestCommit ? formatDate(latestCommit.committedAt) : 'Unknown'}
+              </dd>
+            </div>
+            <div>
+              <dt>Last 4 weeks</dt>
+              <dd>
+                {commitActivity.status === 'available'
+                  ? numberFormatter.format(recentCommitCount)
+                  : 'Unavailable'}
+              </dd>
+            </div>
+          </dl>
+
+          {commitActivity.status === 'available' && weeks.length > 0 ? (
+            <CommitActivityChart
+              weeks={weeks}
+              maxCommitCount={maxCommitCount}
+            />
+          ) : (
+            <p className="repository-activity-muted">
+              Commit trend data is unavailable for this repository.
+            </p>
+          )}
+
+          <a
+            className="repository-link"
+            href={`${repositoryUrl}/commits`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            View commit history
+          </a>
+        </>
       )}
     </section>
   )
 }
 
+function CommitActivityChart({
+  weeks,
+  maxCommitCount,
+}: {
+  weeks: CommitActivityWeek[]
+  maxCommitCount: number
+}) {
+  return (
+    <div className="commit-activity-chart-wrap">
+      <p className="commit-activity-heading">12-week commit activity</p>
+      <div
+        className="commit-activity-chart"
+        role="img"
+        aria-label="Commit counts for the last 12 weeks"
+      >
+        {weeks.map((week) => {
+          const barHeight = week.total
+            ? Math.max((week.total / maxCommitCount) * 100, 8)
+            : 2
+
+          return (
+            <div
+              className="commit-activity-bar-track"
+              key={week.week}
+              title={`${week.total} commits`}
+            >
+              <div
+                className="commit-activity-bar"
+                style={{ height: `${barHeight}%` }}
+              />
+            </div>
+          )
+        })}
+      </div>
+      <div className="commit-activity-scale" aria-hidden="true">
+        <span>12 weeks ago</span>
+        <span>Most recent week</span>
+      </div>
+    </div>
+  )
+}
+
 function PullRequestActivitySection({
+  repositoryUrl,
   pullRequestActivity,
 }: {
+  repositoryUrl: string
   pullRequestActivity: PullRequestActivity
 }) {
   return (
@@ -327,25 +437,31 @@ function PullRequestActivitySection({
         <p className="pull-request-activity-muted">
           Pull request data is unavailable for this repository.
         </p>
-      ) : pullRequestActivity.pullRequests.length === 0 ? (
+      ) : pullRequestActivity.openCount === 0 ? (
         <p className="pull-request-activity-muted">
           No open pull requests found.
         </p>
       ) : (
-        <ul className="pull-request-list">
-          {pullRequestActivity.pullRequests.map((pullRequest) => (
-            <li key={pullRequest.number}>
-              <a href={pullRequest.htmlUrl} target="_blank" rel="noreferrer">
-                <span>#{pullRequest.number}</span>
-                {pullRequest.title}
-              </a>
-              <p>
-                {pullRequest.author} opened {formatDate(pullRequest.createdAt)}
-              </p>
-            </li>
-          ))}
-        </ul>
+        <dl className="repository-details pull-request-summary">
+          <div>
+            <dt>Open pull requests</dt>
+            <dd>{numberFormatter.format(pullRequestActivity.openCount)}</dd>
+          </div>
+          <div>
+            <dt>Latest opened</dt>
+            <dd>{formatDate(pullRequestActivity.latestOpenedAt || '')}</dd>
+          </div>
+        </dl>
       )}
+
+      <a
+        className="repository-link"
+        href={`${repositoryUrl}/pulls`}
+        target="_blank"
+        rel="noreferrer"
+      >
+        View open pull requests
+      </a>
     </section>
   )
 }

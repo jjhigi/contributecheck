@@ -37,17 +37,18 @@ ContributeCheck is not meant to replace GitHub search. It is meant to make contr
 - Good first issue detection:
   - shows up to 5 open issues labeled `good first issue`
   - links each issue to GitHub
-- Open pull request activity:
-  - shows up to 5 open pull requests
-  - shows each pull request's number, title, author, and creation date
-  - links each pull request to GitHub
+- Pull request activity summary:
+  - shows the total number of open pull requests
+  - shows the latest opened pull request date
+  - links to the full open pull request list on GitHub
 - Initial framework detection:
   - checks the repository's root `package.json`
   - detects direct dependencies for Next.js, React, Vue, Angular, and Svelte
-- Repository activity snapshot:
-  - shows up to 5 recent commits
-  - shows each commit's short SHA, title, author, and date
-  - links each commit to GitHub
+- Repository activity summary:
+  - shows the latest commit date
+  - shows the total commits from the last 4 weeks
+  - shows a 12-week commit activity chart
+  - links to the full commit history on GitHub
 
 ## Tech Stack
 

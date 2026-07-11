@@ -153,6 +153,17 @@
   box-shadow: var(--card-shadow);
 }
 
+.repository-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 24px;
+}
+
+.repository-header .repository-link {
+  margin-top: 29px;
+}
+
 .repository-summary h2 {
   margin: 14px 0 8px;
   color: var(--text-h);
@@ -272,9 +283,7 @@
   border-top: 1px solid var(--border);
 }
 
-.good-first-issue-list,
-.pull-request-list,
-.commit-list {
+.good-first-issue-list {
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -283,23 +292,17 @@
   list-style: none;
 }
 
-.good-first-issue-list li,
-.pull-request-list li,
-.commit-list li {
+.good-first-issue-list li {
   padding-top: 20px;
   margin-top: 20px;
   border-top: 1px solid var(--border);
 }
 
-.good-first-issue-list li:first-child,
-.pull-request-list li:first-child,
-.commit-list li:first-child {
+.good-first-issue-list li:first-child {
   margin-top: 0;
 }
 
-.good-first-issue-list a,
-.pull-request-list a,
-.commit-list a {
+.good-first-issue-list a {
   display: flex;
   gap: 10px;
   color: var(--text-h);
@@ -309,32 +312,61 @@
   overflow-wrap: anywhere;
 }
 
-.good-first-issue-list a:hover,
-.pull-request-list a:hover,
-.commit-list a:hover {
+.good-first-issue-list a:hover {
   color: var(--accent-strong);
 }
 
-.good-first-issue-list a:focus-visible,
-.pull-request-list a:focus-visible,
-.commit-list a:focus-visible {
+.good-first-issue-list a:focus-visible {
   border-radius: 6px;
   outline: 3px solid var(--accent-soft);
   outline-offset: 3px;
 }
 
-.good-first-issue-list span,
-.pull-request-list span,
-.commit-list span {
+.good-first-issue-list span {
   flex: 0 0 auto;
   color: var(--muted);
 }
 
-.pull-request-list p,
-.commit-list p {
-  margin: 8px 0 0 30px;
+.commit-activity-chart-wrap {
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.repository-activity .commit-activity-heading {
+  margin: 0;
+  color: var(--text-h);
+  font-weight: 700;
+}
+
+.commit-activity-chart {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: end;
+  gap: 8px;
+  height: 120px;
+  padding-top: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.commit-activity-bar-track {
+  display: flex;
+  height: 100%;
+  align-items: flex-end;
+}
+
+.commit-activity-bar {
+  width: 100%;
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+  background: var(--accent);
+}
+
+.commit-activity-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.78rem;
 }
 
 .repository-link {

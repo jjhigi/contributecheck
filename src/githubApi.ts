@@ -29,25 +29,12 @@ type GitHubIssue = {
 }
 
 type GitHubPullRequest = {
-  number: number
-  title: string
-  user?: {
-    login: string
-  } | null
   created_at: string
-  html_url: string
 }
 
 type GitHubCommit = {
-  sha: string
-  html_url: string
-  author?: {
-    login?: string
-  } | null
   commit: {
-    message: string
     author?: {
-      name?: string
       date?: string
     } | null
   }
@@ -85,28 +72,29 @@ export type GoodFirstIssues =
   | { status: 'available'; issues: GoodFirstIssue[] }
   | { status: 'unavailable' }
 
-export type PullRequestSummary = {
-  number: number
-  title: string
-  author: string
-  createdAt: string
-  htmlUrl: string
-}
-
 export type PullRequestActivity =
-  | { status: 'available'; pullRequests: PullRequestSummary[] }
+  | {
+      status: 'available'
+      openCount: number
+      latestOpenedAt: string | null
+    }
   | { status: 'unavailable' }
 
-export type CommitSummary = {
-  sha: string
-  message: string
-  author: string
+export type LatestCommit = {
   committedAt: string
-  htmlUrl: string
 }
 
 export type RepositoryActivity =
-  | { status: 'available'; commits: CommitSummary[] }
+  | { status: 'available'; latestCommit: LatestCommit | null }
+  | { status: 'unavailable' }
+
+export type CommitActivityWeek = {
+  week: number
+  total: number
+}
+
+export type CommitActivity =
+  | { status: 'available'; weeks: CommitActivityWeek[] }
   | { status: 'unavailable' }
 
 export type SupportedFramework =
@@ -244,14 +232,14 @@ export async function fetchGoodFirstIssues(
   }
 }
 
-/** Fetch a small snapshot of currently open pull requests. */
+/** Fetch the count and latest opened date for open pull requests. */
 export async function fetchOpenPullRequests(
   owner: string,
   repository: string,
 ): Promise<PullRequestActivity> {
   try {
     const response = await fetch(
-      `${githubRepoUrl(owner, repository)}/pulls?state=open&per_page=5`,
+      `${githubRepoUrl(owner, repository)}/pulls?state=open&sort=created&direction=desc&per_page=1`,
       {
         headers: githubHeaders,
       },
@@ -261,30 +249,45 @@ export async function fetchOpenPullRequests(
       return { status: 'unavailable' }
     }
 
-    const pullRequests = (
-      (await response.json()) as GitHubPullRequest[]
-    ).map((pullRequest) => ({
-      number: pullRequest.number,
-      title: pullRequest.title,
-      author: pullRequest.user?.login || 'Unknown author',
-      createdAt: pullRequest.created_at,
-      htmlUrl: pullRequest.html_url,
-    }))
+    const pullRequests = (await response.json()) as GitHubPullRequest[]
 
-    return { status: 'available', pullRequests }
+    return {
+      status: 'available',
+      openCount: getGitHubCollectionCount(response, pullRequests.length),
+      latestOpenedAt: pullRequests[0]?.created_at || null,
+    }
   } catch {
     return { status: 'unavailable' }
   }
 }
 
-/** Fetch a small snapshot of the repository's most recent commits. */
-export async function fetchRecentCommits(
+function getGitHubCollectionCount(
+  response: Response,
+  fallbackCount: number,
+) {
+  const linkHeader = response.headers.get('link')
+  const lastPageLink = linkHeader
+    ?.split(',')
+    .find((link) => link.includes('rel="last"'))
+  const lastPageUrl = lastPageLink?.match(/<([^>]+)>/)?.[1]
+
+  if (!lastPageUrl) {
+    return fallbackCount
+  }
+
+  const lastPage = Number(new URL(lastPageUrl).searchParams.get('page'))
+
+  return Number.isFinite(lastPage) ? lastPage : fallbackCount
+}
+
+/** Fetch the repository's most recent commit date. */
+export async function fetchLatestCommit(
   owner: string,
   repository: string,
 ): Promise<RepositoryActivity> {
   try {
     const response = await fetch(
-      `${githubRepoUrl(owner, repository)}/commits?per_page=5`,
+      `${githubRepoUrl(owner, repository)}/commits?per_page=1`,
       {
         headers: githubHeaders,
       },
@@ -294,20 +297,45 @@ export async function fetchRecentCommits(
       return { status: 'unavailable' }
     }
 
-    const commits = ((await response.json()) as GitHubCommit[]).map(
-      (commit) => ({
-        sha: commit.sha,
-        message: commit.commit.message.split('\n')[0],
-        author:
-          commit.author?.login ||
-          commit.commit.author?.name ||
-          'Unknown author',
-        committedAt: commit.commit.author?.date || '',
-        htmlUrl: commit.html_url,
-      }),
+    const latestCommit = ((await response.json()) as GitHubCommit[])[0]
+
+    return {
+      status: 'available',
+      latestCommit: latestCommit
+        ? { committedAt: latestCommit.commit.author?.date || '' }
+        : null,
+    }
+  } catch {
+    return { status: 'unavailable' }
+  }
+}
+
+/** Fetch weekly commit totals for the repository's most recent 12 weeks. */
+export async function fetchCommitActivity(
+  owner: string,
+  repository: string,
+): Promise<CommitActivity> {
+  try {
+    const response = await fetch(
+      `${githubRepoUrl(owner, repository)}/stats/commit_activity`,
+      {
+        headers: githubHeaders,
+      },
     )
 
-    return { status: 'available', commits }
+    if (!response.ok) {
+      return { status: 'unavailable' }
+    }
+
+    const weeks = ((await response.json()) as CommitActivityWeek[])
+      .filter(
+        (week) =>
+          Number.isFinite(week.week) && Number.isFinite(week.total),
+      )
+      .sort((firstWeek, secondWeek) => firstWeek.week - secondWeek.week)
+      .slice(-12)
+
+    return { status: 'available', weeks }
   } catch {
     return { status: 'unavailable' }
   }
