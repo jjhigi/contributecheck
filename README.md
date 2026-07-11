@@ -4,7 +4,7 @@ ContributeCheck helps developers answer one question:
 
 > Is this repository a good place for me to contribute?
 
-It is a React, TypeScript, and Vite application that analyzes public GitHub repository data and presents contribution-focused signals in a simple, beginner-friendly interface.
+It is a React, TypeScript, and Vite application that analyzes public GitHub repository data and presents contribution-focused signals in a simple interface.
 
 ## Why It Exists
 
@@ -44,6 +44,10 @@ ContributeCheck is not meant to replace GitHub search. It is meant to make contr
 - Initial framework detection:
   - checks the repository's root `package.json`
   - detects direct dependencies for Next.js, React, Vue, Angular, and Svelte
+- Repository activity snapshot:
+  - shows up to 5 recent commits
+  - shows each commit's short SHA, title, author, and date
+  - links each commit to GitHub
 
 ## Tech Stack
 

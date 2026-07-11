@@ -202,7 +202,8 @@
 
 .community-health h3,
 .good-first-issues h3,
-.pull-request-activity h3 {
+.pull-request-activity h3,
+.repository-activity h3 {
   margin: 14px 0 8px;
   color: var(--text-h);
   font-size: 1.2rem;
@@ -212,7 +213,8 @@
 
 .community-health p:not(.result-label),
 .good-first-issues p:not(.result-label),
-.pull-request-activity p:not(.result-label) {
+.pull-request-activity p:not(.result-label),
+.repository-activity p:not(.result-label) {
   color: var(--text);
 }
 
@@ -255,7 +257,8 @@
 }
 
 .good-first-issues-muted,
-.pull-request-activity-muted {
+.pull-request-activity-muted,
+.repository-activity-muted {
   color: var(--muted);
 }
 
@@ -263,13 +266,15 @@
 .community-health-list,
 .community-health-unavailable,
 .good-first-issues-muted,
-.pull-request-activity-muted {
+.pull-request-activity-muted,
+.repository-activity-muted {
   padding-top: 20px;
   border-top: 1px solid var(--border);
 }
 
 .good-first-issue-list,
-.pull-request-list {
+.pull-request-list,
+.commit-list {
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -279,19 +284,22 @@
 }
 
 .good-first-issue-list li,
-.pull-request-list li {
+.pull-request-list li,
+.commit-list li {
   padding-top: 20px;
   margin-top: 20px;
   border-top: 1px solid var(--border);
 }
 
 .good-first-issue-list li:first-child,
-.pull-request-list li:first-child {
+.pull-request-list li:first-child,
+.commit-list li:first-child {
   margin-top: 0;
 }
 
 .good-first-issue-list a,
-.pull-request-list a {
+.pull-request-list a,
+.commit-list a {
   display: flex;
   gap: 10px;
   color: var(--text-h);
@@ -302,24 +310,28 @@
 }
 
 .good-first-issue-list a:hover,
-.pull-request-list a:hover {
+.pull-request-list a:hover,
+.commit-list a:hover {
   color: var(--accent-strong);
 }
 
 .good-first-issue-list a:focus-visible,
-.pull-request-list a:focus-visible {
+.pull-request-list a:focus-visible,
+.commit-list a:focus-visible {
   border-radius: 6px;
   outline: 3px solid var(--accent-soft);
   outline-offset: 3px;
 }
 
 .good-first-issue-list span,
-.pull-request-list span {
+.pull-request-list span,
+.commit-list span {
   flex: 0 0 auto;
   color: var(--muted);
 }
 
-.pull-request-list p {
+.pull-request-list p,
+.commit-list p {
   margin: 8px 0 0 30px;
   color: var(--muted);
   font-size: 0.9rem;

@@ -2,11 +2,11 @@
 
 ## Purpose
 
-ContributeCheck helps developers answer one practical question:
+ContributeCheck helps developers answer the question:
 
 > Is this repository a good place for me to contribute?
 
-The application analyzes public GitHub repository data and presents contribution-focused signals in a clear, beginner-friendly way.
+The application analyzes public GitHub repository data and presents contribution-focused signals in a clear way.
 
 ## Problem
 
@@ -36,14 +36,6 @@ The application should take public repository data and turn it into contribution
 ContributeCheck should be simple, professional, and data-driven.
 
 Whenever possible, recommendations should be based on measurable GitHub data instead of subjective opinions. The application should explain what it found, show the evidence behind its conclusions, and avoid presenting guesses as facts.
-
-Development should stay incremental:
-
-- Build one small feature at a time.
-- Prefer deterministic analysis over AI-generated judgment.
-- Keep the user interface focused and readable.
-- Avoid unnecessary dependencies and infrastructure.
-- Add complexity only when the product clearly needs it.
 
 ## Intended Audience
 

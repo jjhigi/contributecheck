@@ -5,12 +5,14 @@ import {
   fetchFrameworkDetection,
   fetchGoodFirstIssues,
   fetchOpenPullRequests,
+  fetchRecentCommits,
   fetchRepository,
   type CommunityHealth,
   type FrameworkDetection,
   type GitHubRepository,
   type GoodFirstIssues,
   type PullRequestActivity,
+  type RepositoryActivity,
   type RepositoryFetchResult,
 } from './githubApi'
 import { parseRepositoryInput } from './repositoryInput'
@@ -25,6 +27,7 @@ type LookupState =
       communityHealth: CommunityHealth
       goodFirstIssues: GoodFirstIssues
       pullRequestActivity: PullRequestActivity
+      repositoryActivity: RepositoryActivity
     }
   | { status: 'error'; message: string }
 
@@ -71,11 +74,13 @@ function App() {
       communityHealth,
       goodFirstIssues,
       pullRequestActivity,
+      repositoryActivity,
     ] = await Promise.all([
       fetchFrameworkDetection(owner, repository),
       fetchCommunityHealth(owner, repository),
       fetchGoodFirstIssues(owner, repository),
       fetchOpenPullRequests(owner, repository),
+      fetchRecentCommits(owner, repository),
     ])
 
     setLookupState({
@@ -85,6 +90,7 @@ function App() {
       communityHealth,
       goodFirstIssues,
       pullRequestActivity,
+      repositoryActivity,
     })
   }
 
@@ -152,6 +158,7 @@ function App() {
                 communityHealth={lookupState.communityHealth}
                 goodFirstIssues={lookupState.goodFirstIssues}
                 pullRequestActivity={lookupState.pullRequestActivity}
+                repositoryActivity={lookupState.repositoryActivity}
               />
             )}
           </div>
@@ -184,12 +191,14 @@ function RepositoryResults({
   communityHealth,
   goodFirstIssues,
   pullRequestActivity,
+  repositoryActivity,
 }: {
   repository: GitHubRepository
   frameworkDetection: FrameworkDetection
   communityHealth: CommunityHealth
   goodFirstIssues: GoodFirstIssues
   pullRequestActivity: PullRequestActivity
+  repositoryActivity: RepositoryActivity
 }) {
   return (
     <article className="repository-results">
@@ -246,7 +255,52 @@ function RepositoryResults({
       <GoodFirstIssuesSection goodFirstIssues={goodFirstIssues} />
 
       <PullRequestActivitySection pullRequestActivity={pullRequestActivity} />
+
+      <RepositoryActivitySection repositoryActivity={repositoryActivity} />
     </article>
+  )
+}
+
+function RepositoryActivitySection({
+  repositoryActivity,
+}: {
+  repositoryActivity: RepositoryActivity
+}) {
+  return (
+    <section
+      className="result-section repository-activity"
+      aria-labelledby="repository-activity"
+    >
+      <div>
+        <p className="result-label">Repository activity</p>
+        <h3 id="repository-activity">Recent commits</h3>
+        <p>
+          Recent commits provide a simple view of ongoing project activity.
+        </p>
+      </div>
+
+      {repositoryActivity.status === 'unavailable' ? (
+        <p className="repository-activity-muted">
+          Commit data is unavailable for this repository.
+        </p>
+      ) : repositoryActivity.commits.length === 0 ? (
+        <p className="repository-activity-muted">No recent commits found.</p>
+      ) : (
+        <ul className="commit-list">
+          {repositoryActivity.commits.map((commit) => (
+            <li key={commit.sha}>
+              <a href={commit.htmlUrl} target="_blank" rel="noreferrer">
+                <span>{commit.sha.slice(0, 7)}</span>
+                {commit.message}
+              </a>
+              <p>
+                {commit.author} committed {formatDate(commit.committedAt)}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }
 

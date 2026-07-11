@@ -38,6 +38,21 @@ type GitHubPullRequest = {
   html_url: string
 }
 
+type GitHubCommit = {
+  sha: string
+  html_url: string
+  author?: {
+    login?: string
+  } | null
+  commit: {
+    message: string
+    author?: {
+      name?: string
+      date?: string
+    } | null
+  }
+}
+
 type GitHubContentFile = {
   content?: string
   encoding?: string
@@ -80,6 +95,18 @@ export type PullRequestSummary = {
 
 export type PullRequestActivity =
   | { status: 'available'; pullRequests: PullRequestSummary[] }
+  | { status: 'unavailable' }
+
+export type CommitSummary = {
+  sha: string
+  message: string
+  author: string
+  committedAt: string
+  htmlUrl: string
+}
+
+export type RepositoryActivity =
+  | { status: 'available'; commits: CommitSummary[] }
   | { status: 'unavailable' }
 
 export type SupportedFramework =
@@ -245,6 +272,42 @@ export async function fetchOpenPullRequests(
     }))
 
     return { status: 'available', pullRequests }
+  } catch {
+    return { status: 'unavailable' }
+  }
+}
+
+/** Fetch a small snapshot of the repository's most recent commits. */
+export async function fetchRecentCommits(
+  owner: string,
+  repository: string,
+): Promise<RepositoryActivity> {
+  try {
+    const response = await fetch(
+      `${githubRepoUrl(owner, repository)}/commits?per_page=5`,
+      {
+        headers: githubHeaders,
+      },
+    )
+
+    if (!response.ok) {
+      return { status: 'unavailable' }
+    }
+
+    const commits = ((await response.json()) as GitHubCommit[]).map(
+      (commit) => ({
+        sha: commit.sha,
+        message: commit.commit.message.split('\n')[0],
+        author:
+          commit.author?.login ||
+          commit.commit.author?.name ||
+          'Unknown author',
+        committedAt: commit.commit.author?.date || '',
+        htmlUrl: commit.html_url,
+      }),
+    )
+
+    return { status: 'available', commits }
   } catch {
     return { status: 'unavailable' }
   }
