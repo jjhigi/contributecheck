@@ -114,6 +114,13 @@
   box-shadow: var(--card-shadow);
 }
 
+.results-card.results-stack {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
 .results-card p {
   color: var(--muted);
 }
@@ -130,11 +137,22 @@
 .repository-results {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 24px;
+}
+
+.result-section {
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 24px;
+  text-align: left;
+  box-shadow: var(--card-shadow);
 }
 
 .repository-summary {
   padding-bottom: 22px;
+  margin-bottom: 22px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -185,15 +203,15 @@
   overflow-wrap: anywhere;
 }
 
-.community-health {
+.community-health,
+.good-first-issues {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding-top: 22px;
-  border-top: 1px solid var(--border);
 }
 
-.community-health h3 {
+.community-health h3,
+.good-first-issues h3 {
   margin: 4px 0 8px;
   color: var(--text-h);
   font-size: 1.2rem;
@@ -201,7 +219,8 @@
   letter-spacing: 0;
 }
 
-.community-health p:not(.result-label) {
+.community-health p:not(.result-label),
+.good-first-issues p:not(.result-label) {
   color: var(--text);
 }
 
@@ -243,8 +262,53 @@
   color: var(--muted);
 }
 
+.good-first-issues-muted {
+  color: var(--muted);
+}
+
+.good-first-issue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.good-first-issue-list li {
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.good-first-issue-list a {
+  display: flex;
+  gap: 10px;
+  color: var(--text-h);
+  font-weight: 700;
+  line-height: 1.35;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.good-first-issue-list a:hover {
+  color: var(--accent-strong);
+}
+
+.good-first-issue-list a:focus-visible {
+  border-radius: 6px;
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 3px;
+}
+
+.good-first-issue-list span {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
 .repository-link {
   align-self: flex-start;
+  display: inline-flex;
+  margin-top: 22px;
   border-radius: 8px;
   background: var(--accent-soft);
   color: var(--accent-strong);
