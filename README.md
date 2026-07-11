@@ -104,12 +104,3 @@ For more detail, see:
 
 - [Project Vision](PROJECT_VISION.md)
 - [Roadmap](ROADMAP.md)
-
-## Development Notes
-
-- Do not scaffold or recreate the project.
-- Do not add dependencies unless they are clearly necessary.
-- Do not add a backend unless explicitly requested.
-- Preserve the existing visual style.
-- Keep implementations small, readable, and deterministic.
- 
