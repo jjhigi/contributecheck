@@ -14,7 +14,7 @@ Status:
 
 - Landing page: complete
 - Repository lookup: complete
-- Repository details: next recommended milestone
+- Repository details: complete
 
 ## Phase 2: Contribution Readiness Signals
 
@@ -28,6 +28,12 @@ Goal: Identify basic signals that help developers understand whether a repositor
 - Pull request template detection
 - Good First Issue detection
 
+Status:
+
+- Community health files: complete
+- Good First Issue detection: complete
+- Framework detection: planned
+
 ## Phase 3: Repository Health Metrics
 
 Goal: Add objective activity and maintenance metrics that help users evaluate whether a repository is active and current.
@@ -37,13 +43,25 @@ Goal: Add objective activity and maintenance metrics that help users evaluate wh
 - Release history
 - Commit activity
 
+Status:
+
+- Planned
+
 ## Phase 4: Contribution Workflow Analysis
 
 Goal: Analyze pull request and contributor patterns to estimate how approachable the project is for outside contributors.
 
+- Basic open pull request snapshot
 - Pull request analysis
 - Maintainer responsiveness
 - First-time contributor metrics
+
+Status:
+
+- Basic open pull request snapshot: complete
+- Deeper pull request analysis: planned
+- Maintainer responsiveness: planned
+- First-time contributor metrics: planned
 
 ## Phase 5: Scoring And Recommendations
 
@@ -52,3 +70,14 @@ Goal: Combine measured signals into clear contribution-focused summaries and rec
 - Repository scoring
 - Repository recommendations
 - Search and filtering
+
+Status:
+
+- Planned
+
+## Current Direction
+
+The current implementation provides repository details, community health file
+signals, good first issue detection, and a basic snapshot of open pull
+requests. The next recommended milestone is framework detection, completing
+the remaining planned work in Phase 2 before broader repository health metrics.

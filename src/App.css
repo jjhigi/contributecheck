@@ -201,7 +201,8 @@
 }
 
 .community-health h3,
-.good-first-issues h3 {
+.good-first-issues h3,
+.pull-request-activity h3 {
   margin: 14px 0 8px;
   color: var(--text-h);
   font-size: 1.2rem;
@@ -210,7 +211,8 @@
 }
 
 .community-health p:not(.result-label),
-.good-first-issues p:not(.result-label) {
+.good-first-issues p:not(.result-label),
+.pull-request-activity p:not(.result-label) {
   color: var(--text);
 }
 
@@ -252,19 +254,22 @@
   color: var(--muted);
 }
 
-.good-first-issues-muted {
+.good-first-issues-muted,
+.pull-request-activity-muted {
   color: var(--muted);
 }
 
 .repository-details,
 .community-health-list,
 .community-health-unavailable,
-.good-first-issues-muted {
+.good-first-issues-muted,
+.pull-request-activity-muted {
   padding-top: 20px;
   border-top: 1px solid var(--border);
 }
 
-.good-first-issue-list {
+.good-first-issue-list,
+.pull-request-list {
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -273,17 +278,20 @@
   list-style: none;
 }
 
-.good-first-issue-list li {
+.good-first-issue-list li,
+.pull-request-list li {
   padding-top: 20px;
   margin-top: 20px;
   border-top: 1px solid var(--border);
 }
 
-.good-first-issue-list li:first-child {
+.good-first-issue-list li:first-child,
+.pull-request-list li:first-child {
   margin-top: 0;
 }
 
-.good-first-issue-list a {
+.good-first-issue-list a,
+.pull-request-list a {
   display: flex;
   gap: 10px;
   color: var(--text-h);
@@ -293,19 +301,28 @@
   overflow-wrap: anywhere;
 }
 
-.good-first-issue-list a:hover {
+.good-first-issue-list a:hover,
+.pull-request-list a:hover {
   color: var(--accent-strong);
 }
 
-.good-first-issue-list a:focus-visible {
+.good-first-issue-list a:focus-visible,
+.pull-request-list a:focus-visible {
   border-radius: 6px;
   outline: 3px solid var(--accent-soft);
   outline-offset: 3px;
 }
 
-.good-first-issue-list span {
+.good-first-issue-list span,
+.pull-request-list span {
   flex: 0 0 auto;
   color: var(--muted);
+}
+
+.pull-request-list p {
+  margin: 8px 0 0 30px;
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .repository-link {

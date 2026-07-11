@@ -3,10 +3,12 @@ import './App.css'
 import {
   fetchCommunityHealth,
   fetchGoodFirstIssues,
+  fetchOpenPullRequests,
   fetchRepository,
   type CommunityHealth,
   type GitHubRepository,
   type GoodFirstIssues,
+  type PullRequestActivity,
   type RepositoryFetchResult,
 } from './githubApi'
 import { parseRepositoryInput } from './repositoryInput'
@@ -19,6 +21,7 @@ type LookupState =
       repository: GitHubRepository
       communityHealth: CommunityHealth
       goodFirstIssues: GoodFirstIssues
+      pullRequestActivity: PullRequestActivity
     }
   | { status: 'error'; message: string }
 
@@ -60,16 +63,19 @@ function App() {
       return
     }
 
-    const [communityHealth, goodFirstIssues] = await Promise.all([
-      fetchCommunityHealth(owner, repository),
-      fetchGoodFirstIssues(owner, repository),
-    ])
+    const [communityHealth, goodFirstIssues, pullRequestActivity] =
+      await Promise.all([
+        fetchCommunityHealth(owner, repository),
+        fetchGoodFirstIssues(owner, repository),
+        fetchOpenPullRequests(owner, repository),
+      ])
 
     setLookupState({
       status: 'success',
       repository: repositoryResult.repository,
       communityHealth,
       goodFirstIssues,
+      pullRequestActivity,
     })
   }
 
@@ -135,6 +141,7 @@ function App() {
                 repository={lookupState.repository}
                 communityHealth={lookupState.communityHealth}
                 goodFirstIssues={lookupState.goodFirstIssues}
+                pullRequestActivity={lookupState.pullRequestActivity}
               />
             )}
           </div>
@@ -165,10 +172,12 @@ function RepositoryResults({
   repository,
   communityHealth,
   goodFirstIssues,
+  pullRequestActivity,
 }: {
   repository: GitHubRepository
   communityHealth: CommunityHealth
   goodFirstIssues: GoodFirstIssues
+  pullRequestActivity: PullRequestActivity
 }) {
   return (
     <article className="repository-results">
@@ -219,7 +228,55 @@ function RepositoryResults({
       <CommunityHealthSection communityHealth={communityHealth} />
 
       <GoodFirstIssuesSection goodFirstIssues={goodFirstIssues} />
+
+      <PullRequestActivitySection pullRequestActivity={pullRequestActivity} />
     </article>
+  )
+}
+
+function PullRequestActivitySection({
+  pullRequestActivity,
+}: {
+  pullRequestActivity: PullRequestActivity
+}) {
+  return (
+    <section
+      className="result-section pull-request-activity"
+      aria-labelledby="pull-request-activity"
+    >
+      <div>
+        <p className="result-label">Pull request activity</p>
+        <h3 id="pull-request-activity">Open pull requests</h3>
+        <p>
+          Recent open pull requests show the work currently waiting for review
+          or discussion.
+        </p>
+      </div>
+
+      {pullRequestActivity.status === 'unavailable' ? (
+        <p className="pull-request-activity-muted">
+          Pull request data is unavailable for this repository.
+        </p>
+      ) : pullRequestActivity.pullRequests.length === 0 ? (
+        <p className="pull-request-activity-muted">
+          No open pull requests found.
+        </p>
+      ) : (
+        <ul className="pull-request-list">
+          {pullRequestActivity.pullRequests.map((pullRequest) => (
+            <li key={pullRequest.number}>
+              <a href={pullRequest.htmlUrl} target="_blank" rel="noreferrer">
+                <span>#{pullRequest.number}</span>
+                {pullRequest.title}
+              </a>
+              <p>
+                {pullRequest.author} opened {formatDate(pullRequest.createdAt)}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }
 
