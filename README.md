@@ -44,6 +44,7 @@ ContributeCheck is not meant to replace GitHub search. It is meant to make contr
   - shows the 90-day merge rate for pull requests closed during that period
   - shows median merge time for a bounded sample of recent merged pull requests
   - shows median time to first outside review for a bounded sample of recent pull requests
+  - shows outside review coverage for that bounded pull request sample
   - links to the full open pull request list on GitHub
 - Initial framework detection:
   - checks the repository's root `package.json`

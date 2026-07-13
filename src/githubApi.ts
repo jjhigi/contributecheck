@@ -116,6 +116,8 @@ export type PullRequestReviewActivity =
       status: 'available'
       medianFirstReviewTimeDays: number | null
       firstReviewSampleSize: number
+      reviewedPullRequestCount: number
+      sampledPullRequestCount: number
     }
   | { status: 'unavailable' }
 
@@ -381,6 +383,11 @@ export async function fetchPullRequestReviewActivity(
       status: 'available',
       medianFirstReviewTimeDays: firstReviewStats.medianDays,
       firstReviewSampleSize: firstReviewStats.sampleSize,
+      reviewedPullRequestCount: getReviewedPullRequestCount(
+        pullRequests,
+        reviewResults as GitHubPullRequestReview[][],
+      ),
+      sampledPullRequestCount: pullRequests.length,
     }
   } catch {
     return { status: 'unavailable' }
@@ -523,6 +530,28 @@ function getFirstReviewTimeStats(
     medianDays: Math.round(medianDuration / dayMilliseconds),
     sampleSize: durations.length,
   }
+}
+
+function getReviewedPullRequestCount(
+  pullRequests: GitHubPullRequest[],
+  reviewResults: GitHubPullRequestReview[][],
+) {
+  return pullRequests.reduce((reviewedCount, pullRequest, index) => {
+    const authorLogin = pullRequest.user?.login?.toLowerCase()
+    const hasOutsideReview = reviewResults[index].some((review) => {
+      const reviewerLogin = review.user?.login?.toLowerCase()
+      const submittedAt = Date.parse(review.submitted_at || '')
+
+      return Boolean(
+        authorLogin &&
+          reviewerLogin &&
+          reviewerLogin !== authorLogin &&
+          Number.isFinite(submittedAt),
+      )
+    })
+
+    return reviewedCount + (hasOutsideReview ? 1 : 0)
+  }, 0)
 }
 
 function getGitHubCollectionCount(
