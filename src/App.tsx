@@ -7,6 +7,7 @@ import {
   fetchGoodFirstIssues,
   fetchLatestCommit,
   fetchOpenPullRequests,
+  fetchPullRequestMergeActivity,
   fetchRepository,
   type CommunityHealth,
   type CommitActivity,
@@ -15,6 +16,7 @@ import {
   type GitHubRepository,
   type GoodFirstIssues,
   type PullRequestActivity,
+  type PullRequestMergeActivity,
   type RepositoryActivity,
   type RepositoryFetchResult,
 } from './githubApi'
@@ -30,6 +32,7 @@ type LookupState =
       communityHealth: CommunityHealth
       goodFirstIssues: GoodFirstIssues
       pullRequestActivity: PullRequestActivity
+      pullRequestMergeActivity: PullRequestMergeActivity
       repositoryActivity: RepositoryActivity
       commitActivity: CommitActivity
     }
@@ -78,6 +81,7 @@ function App() {
       communityHealth,
       goodFirstIssues,
       pullRequestActivity,
+      pullRequestMergeActivity,
       repositoryActivity,
       commitActivity,
     ] = await Promise.all([
@@ -85,6 +89,7 @@ function App() {
       fetchCommunityHealth(owner, repository),
       fetchGoodFirstIssues(owner, repository),
       fetchOpenPullRequests(owner, repository),
+      fetchPullRequestMergeActivity(owner, repository),
       fetchLatestCommit(owner, repository),
       fetchCommitActivity(owner, repository),
     ])
@@ -96,6 +101,7 @@ function App() {
       communityHealth,
       goodFirstIssues,
       pullRequestActivity,
+      pullRequestMergeActivity,
       repositoryActivity,
       commitActivity,
     })
@@ -165,6 +171,7 @@ function App() {
                 communityHealth={lookupState.communityHealth}
                 goodFirstIssues={lookupState.goodFirstIssues}
                 pullRequestActivity={lookupState.pullRequestActivity}
+                pullRequestMergeActivity={lookupState.pullRequestMergeActivity}
                 repositoryActivity={lookupState.repositoryActivity}
                 commitActivity={lookupState.commitActivity}
               />
@@ -199,6 +206,7 @@ function RepositoryResults({
   communityHealth,
   goodFirstIssues,
   pullRequestActivity,
+  pullRequestMergeActivity,
   repositoryActivity,
   commitActivity,
 }: {
@@ -207,6 +215,7 @@ function RepositoryResults({
   communityHealth: CommunityHealth
   goodFirstIssues: GoodFirstIssues
   pullRequestActivity: PullRequestActivity
+  pullRequestMergeActivity: PullRequestMergeActivity
   repositoryActivity: RepositoryActivity
   commitActivity: CommitActivity
 }) {
@@ -269,6 +278,7 @@ function RepositoryResults({
       <PullRequestActivitySection
         repositoryUrl={repository.html_url}
         pullRequestActivity={pullRequestActivity}
+        pullRequestMergeActivity={pullRequestMergeActivity}
       />
 
       <RepositoryActivitySection
@@ -415,10 +425,16 @@ function CommitActivityChart({
 function PullRequestActivitySection({
   repositoryUrl,
   pullRequestActivity,
+  pullRequestMergeActivity,
 }: {
   repositoryUrl: string
   pullRequestActivity: PullRequestActivity
+  pullRequestMergeActivity: PullRequestMergeActivity
 }) {
+  const hasPullRequestData =
+    pullRequestActivity.status === 'available' ||
+    pullRequestMergeActivity.status === 'available'
+
   return (
     <section
       className="result-section pull-request-activity"
@@ -426,30 +442,54 @@ function PullRequestActivitySection({
     >
       <div>
         <p className="result-label">Pull request activity</p>
-        <h3 id="pull-request-activity">Open pull requests</h3>
+        <h3 id="pull-request-activity">Pull request summary</h3>
         <p>
-          Recent open pull requests show the work currently waiting for review
-          or discussion.
+          Open and recently merged pull requests provide measurable context
+          about contribution activity and resolution speed.
         </p>
       </div>
 
-      {pullRequestActivity.status === 'unavailable' ? (
+      {!hasPullRequestData ? (
         <p className="pull-request-activity-muted">
           Pull request data is unavailable for this repository.
-        </p>
-      ) : pullRequestActivity.openCount === 0 ? (
-        <p className="pull-request-activity-muted">
-          No open pull requests found.
         </p>
       ) : (
         <dl className="repository-details pull-request-summary">
           <div>
             <dt>Open pull requests</dt>
-            <dd>{numberFormatter.format(pullRequestActivity.openCount)}</dd>
+            <dd>
+              {pullRequestActivity.status === 'available'
+                ? numberFormatter.format(pullRequestActivity.openCount)
+                : 'Unavailable'}
+            </dd>
           </div>
           <div>
-            <dt>Latest opened</dt>
-            <dd>{formatDate(pullRequestActivity.latestOpenedAt || '')}</dd>
+            <dt>Oldest open</dt>
+            <dd>
+              {pullRequestActivity.status !== 'available'
+                ? 'Unavailable'
+                : pullRequestActivity.openCount > 0
+                  ? formatAge(pullRequestActivity.oldestOpenedAt || '')
+                  : 'None'}
+            </dd>
+          </div>
+          <div>
+            <dt>Merged (90 days)</dt>
+            <dd>
+              {pullRequestMergeActivity.status === 'available'
+                ? numberFormatter.format(
+                    pullRequestMergeActivity.mergedCount,
+                  )
+                : 'Unavailable'}
+            </dd>
+          </div>
+          <div>
+            <dt>Merge rate (90 days)</dt>
+            <dd>{formatMergeRate(pullRequestMergeActivity)}</dd>
+          </div>
+          <div>
+            <dt>{getMergeTimeLabel(pullRequestMergeActivity)}</dt>
+            <dd>{formatMergeTime(pullRequestMergeActivity)}</dd>
           </div>
         </dl>
       )}
@@ -581,6 +621,83 @@ function formatDate(value: string) {
   }
 
   return dateFormatter.format(date)
+}
+
+function formatAge(value: string) {
+  const date = new Date(value)
+  const elapsedMilliseconds = Date.now() - date.getTime()
+
+  if (Number.isNaN(date.getTime()) || elapsedMilliseconds < 0) {
+    return 'Unknown'
+  }
+
+  if (elapsedMilliseconds < 60 * 1000) {
+    return 'Less than a minute'
+  }
+
+  const ageUnits = [
+    { label: 'year', milliseconds: 365 * 24 * 60 * 60 * 1000 },
+    { label: 'month', milliseconds: 30 * 24 * 60 * 60 * 1000 },
+    { label: 'day', milliseconds: 24 * 60 * 60 * 1000 },
+    { label: 'hour', milliseconds: 60 * 60 * 1000 },
+    { label: 'minute', milliseconds: 60 * 1000 },
+  ]
+  const ageUnit =
+    ageUnits.find((unit) => elapsedMilliseconds >= unit.milliseconds) ||
+    ageUnits[ageUnits.length - 1]
+  const age = Math.floor(elapsedMilliseconds / ageUnit.milliseconds)
+
+  return `${age} ${ageUnit.label}${age === 1 ? '' : 's'}`
+}
+
+function formatMergeRate(activity: PullRequestMergeActivity) {
+  if (activity.status === 'unavailable') {
+    return 'Unavailable'
+  }
+
+  if (activity.closedCount === 0) {
+    return 'No closed PRs'
+  }
+
+  const mergeRate = Math.round(
+    (activity.mergedCount / activity.closedCount) * 100,
+  )
+
+  return `${mergeRate}% (${numberFormatter.format(
+    activity.mergedCount,
+  )} of ${numberFormatter.format(activity.closedCount)})`
+}
+
+function getMergeTimeLabel(activity: PullRequestMergeActivity) {
+  if (activity.status === 'unavailable') {
+    return 'Median merge time'
+  }
+
+  return `Median merge time (${activity.mergeTimeSampleSize} ${
+    activity.mergeTimeSampleSize === 1 ? 'PR' : 'PRs'
+  } sampled)`
+}
+
+function formatMergeTime(activity: PullRequestMergeActivity) {
+  if (activity.status === 'unavailable') {
+    return 'Unavailable'
+  }
+
+  if (activity.mergedCount === 0) {
+    return 'No merged PRs'
+  }
+
+  if (activity.medianMergeTimeDays === null) {
+    return 'Unavailable'
+  }
+
+  const days = activity.medianMergeTimeDays
+
+  if (days < 1) {
+    return 'Less than a day'
+  }
+
+  return `${days} day${days === 1 ? '' : 's'}`
 }
 
 function formatFramework(detection: FrameworkDetection) {

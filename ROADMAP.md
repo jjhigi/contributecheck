@@ -57,6 +57,8 @@ Status:
 Goal: Analyze pull request and contributor patterns to estimate how approachable the project is for outside contributors.
 
 - Pull request activity summary
+- Pull request merge activity
+- Pull request resolution time
 - Pull request analysis
 - Maintainer responsiveness
 - First-time contributor metrics
@@ -64,6 +66,8 @@ Goal: Analyze pull request and contributor patterns to estimate how approachable
 Status:
 
 - Pull request activity summary: complete
+- Pull request merge activity, initial 90-day version: complete
+- Pull request resolution time, initial 90-day sample: complete
 - Deeper pull request analysis: planned
 - Maintainer responsiveness: planned
 - First-time contributor metrics: planned
@@ -83,9 +87,10 @@ Status:
 ## Current Direction
 
 The current implementation provides repository details, community health file
-signals, good first issue detection, and a basic summary of open pull
-requests. It also provides an initial framework signal for supported direct
-dependencies in a repository's root `package.json`, plus a 12-week commit
-activity trend. The next recommended milestone is another measurable
-repository health metric. Framework detection for monorepos and additional
-ecosystems remains planned, while release history is optional future work.
+signals, good first issue detection, and an initial pull request health
+summary with open, merged, closed, and resolution-time activity. It also
+provides an initial framework signal for supported direct dependencies in a
+repository's root `package.json`, plus a 12-week commit activity trend. The
+next recommended milestone is maintainer responsiveness. Framework detection
+for monorepos and additional ecosystems remains planned, while release history
+is optional future work.

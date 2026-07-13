@@ -39,7 +39,10 @@ ContributeCheck is not meant to replace GitHub search. It is meant to make contr
   - links each issue to GitHub
 - Pull request activity summary:
   - shows the total number of open pull requests
-  - shows the latest opened pull request date
+  - shows the age of the oldest open pull request
+  - shows the number of pull requests merged in the last 90 days
+  - shows the 90-day merge rate for pull requests closed during that period
+  - shows median merge time for a bounded sample of recent merged pull requests
   - links to the full open pull request list on GitHub
 - Initial framework detection:
   - checks the repository's root `package.json`
