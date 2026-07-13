@@ -8,6 +8,7 @@ import {
   formatFirstReviewTime,
   formatMergeRate,
   formatMergeTime,
+  formatReviewCoverage,
   getFirstReviewTimeLabel,
   getMergeTimeLabel,
   numberFormatter,
@@ -88,6 +89,10 @@ export function PullRequestActivitySection({
           <div>
             <dt>{getFirstReviewTimeLabel(pullRequestReviewActivity)}</dt>
             <dd>{formatFirstReviewTime(pullRequestReviewActivity)}</dd>
+          </div>
+          <div>
+            <dt>Outside review coverage</dt>
+            <dd>{formatReviewCoverage(pullRequestReviewActivity)}</dd>
           </div>
         </dl>
       )}

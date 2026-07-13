@@ -135,6 +135,28 @@ export function formatFirstReviewTime(activity: PullRequestReviewActivity) {
   return formatDuration(activity.medianFirstReviewTimeDays)
 }
 
+export function formatReviewCoverage(activity: PullRequestReviewActivity) {
+  if (activity.status === 'unavailable') {
+    return 'Unavailable'
+  }
+
+  if (activity.sampledPullRequestCount === 0) {
+    return 'No recent closed PRs'
+  }
+
+  const coverage = Math.round(
+    (activity.reviewedPullRequestCount / activity.sampledPullRequestCount) * 100,
+  )
+  const pullRequestLabel =
+    activity.sampledPullRequestCount === 1 ? 'PR' : 'PRs'
+
+  return `${coverage}% (${numberFormatter.format(
+    activity.reviewedPullRequestCount,
+  )} of ${numberFormatter.format(
+    activity.sampledPullRequestCount,
+  )} ${pullRequestLabel})`
+}
+
 function formatDuration(days: number) {
   if (days < 1) {
     return 'Less than a day'
