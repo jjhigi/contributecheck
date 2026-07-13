@@ -68,8 +68,9 @@ Status:
 - Pull request activity summary: complete
 - Pull request merge activity, initial 90-day version: complete
 - Pull request resolution time, initial 90-day sample: complete
+- Maintainer responsiveness, initial first-review version: complete
 - Deeper pull request analysis: planned
-- Maintainer responsiveness: planned
+- Broader maintainer responsiveness analysis: planned
 - First-time contributor metrics: planned
 
 ## Phase 5: Scoring And Recommendations
@@ -91,6 +92,8 @@ signals, good first issue detection, and an initial pull request health
 summary with open, merged, closed, and resolution-time activity. It also
 provides an initial framework signal for supported direct dependencies in a
 repository's root `package.json`, plus a 12-week commit activity trend. The
-next recommended milestone is maintainer responsiveness. Framework detection
-for monorepos and additional ecosystems remains planned, while release history
-is optional future work.
+pull request summary also includes a bounded first-review responsiveness
+sample. The next recommended work is deeper maintainer responsiveness analysis
+and first-time contributor metrics. Framework detection for monorepos and
+additional ecosystems remains planned, while release history is optional
+future work.
