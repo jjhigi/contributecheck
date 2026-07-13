@@ -29,7 +29,11 @@ type GitHubIssue = {
 }
 
 type GitHubPullRequest = {
+  number: number
   created_at: string
+  user?: {
+    login?: string
+  } | null
 }
 
 type GitHubSearchResult = {
@@ -40,6 +44,13 @@ type GitHubSearchResult = {
 type GitHubSearchItem = {
   created_at?: string
   closed_at?: string | null
+}
+
+type GitHubPullRequestReview = {
+  submitted_at?: string | null
+  user?: {
+    login?: string
+  } | null
 }
 
 type GitHubCommit = {
@@ -100,6 +111,14 @@ export type PullRequestMergeActivity =
     }
   | { status: 'unavailable' }
 
+export type PullRequestReviewActivity =
+  | {
+      status: 'available'
+      medianFirstReviewTimeDays: number | null
+      firstReviewSampleSize: number
+    }
+  | { status: 'unavailable' }
+
 export type LatestCommit = {
   committedAt: string
 }
@@ -143,6 +162,7 @@ const githubHeaders = {
 
 const recentMergedWindowDays = 90
 const recentMergeSampleSize = 100
+const recentReviewPullRequestSampleSize = 10
 const dayMilliseconds = 24 * 60 * 60 * 1000
 
 const frameworkDependencies: Array<{
@@ -324,6 +344,49 @@ export async function fetchPullRequestMergeActivity(
   }
 }
 
+/** Fetch first-review timing for a bounded sample of recently updated pull requests. */
+export async function fetchPullRequestReviewActivity(
+  owner: string,
+  repository: string,
+): Promise<PullRequestReviewActivity> {
+  try {
+    const response = await fetch(
+      `${githubRepoUrl(owner, repository)}/pulls?state=closed&sort=updated&direction=desc&per_page=${recentReviewPullRequestSampleSize}`,
+      {
+        headers: githubHeaders,
+      },
+    )
+
+    if (!response.ok) {
+      return { status: 'unavailable' }
+    }
+
+    const pullRequests = (await response.json()) as GitHubPullRequest[]
+    const reviewResults = await Promise.all(
+      pullRequests.map((pullRequest) =>
+        fetchPullRequestReviews(owner, repository, pullRequest.number),
+      ),
+    )
+
+    if (reviewResults.some((reviews) => reviews === null)) {
+      return { status: 'unavailable' }
+    }
+
+    const firstReviewStats = getFirstReviewTimeStats(
+      pullRequests,
+      reviewResults as GitHubPullRequestReview[][],
+    )
+
+    return {
+      status: 'available',
+      medianFirstReviewTimeDays: firstReviewStats.medianDays,
+      firstReviewSampleSize: firstReviewStats.sampleSize,
+    }
+  } catch {
+    return { status: 'unavailable' }
+  }
+}
+
 async function fetchGitHubSearchResult(
   query: string,
   perPage: number,
@@ -341,6 +404,29 @@ async function fetchGitHubSearchResult(
     }
 
     return (await response.json()) as GitHubSearchResult
+  } catch {
+    return null
+  }
+}
+
+async function fetchPullRequestReviews(
+  owner: string,
+  repository: string,
+  pullRequestNumber: number,
+): Promise<GitHubPullRequestReview[] | null> {
+  try {
+    const response = await fetch(
+      `${githubRepoUrl(owner, repository)}/pulls/${pullRequestNumber}/reviews?per_page=100`,
+      {
+        headers: githubHeaders,
+      },
+    )
+
+    if (!response.ok) {
+      return null
+    }
+
+    return (await response.json()) as GitHubPullRequestReview[]
   } catch {
     return null
   }
@@ -369,6 +455,56 @@ function getMergeTimeStats(items: GitHubSearchItem[]) {
       }
 
       return closedAt - createdAt
+    })
+    .filter((duration): duration is number => duration !== null)
+    .sort((firstDuration, secondDuration) => firstDuration - secondDuration)
+
+  if (durations.length === 0) {
+    return { medianDays: null, sampleSize: 0 }
+  }
+
+  const middleIndex = Math.floor(durations.length / 2)
+  const medianDuration =
+    durations.length % 2 === 1
+      ? durations[middleIndex]
+      : (durations[middleIndex - 1] + durations[middleIndex]) / 2
+
+  return {
+    medianDays: Math.round(medianDuration / dayMilliseconds),
+    sampleSize: durations.length,
+  }
+}
+
+function getFirstReviewTimeStats(
+  pullRequests: GitHubPullRequest[],
+  reviewResults: GitHubPullRequestReview[][],
+) {
+  const durations = pullRequests
+    .map((pullRequest, index) => {
+      const createdAt = Date.parse(pullRequest.created_at || '')
+      const authorLogin = pullRequest.user?.login?.toLowerCase()
+      const firstReviewDuration = reviewResults[index]
+        .map((review) => {
+          const reviewerLogin = review.user?.login?.toLowerCase()
+          const submittedAt = Date.parse(review.submitted_at || '')
+
+          if (
+            !authorLogin ||
+            !reviewerLogin ||
+            reviewerLogin === authorLogin ||
+            !Number.isFinite(createdAt) ||
+            !Number.isFinite(submittedAt) ||
+            submittedAt < createdAt
+          ) {
+            return null
+          }
+
+          return submittedAt - createdAt
+        })
+        .filter((duration): duration is number => duration !== null)
+        .sort((firstDuration, secondDuration) => firstDuration - secondDuration)[0]
+
+      return firstReviewDuration ?? null
     })
     .filter((duration): duration is number => duration !== null)
     .sort((firstDuration, secondDuration) => firstDuration - secondDuration)

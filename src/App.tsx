@@ -8,6 +8,7 @@ import {
   fetchLatestCommit,
   fetchOpenPullRequests,
   fetchPullRequestMergeActivity,
+  fetchPullRequestReviewActivity,
   fetchRepository,
   type CommunityHealth,
   type CommitActivity,
@@ -17,6 +18,7 @@ import {
   type GoodFirstIssues,
   type PullRequestActivity,
   type PullRequestMergeActivity,
+  type PullRequestReviewActivity,
   type RepositoryActivity,
   type RepositoryFetchResult,
 } from './githubApi'
@@ -33,6 +35,7 @@ type LookupState =
       goodFirstIssues: GoodFirstIssues
       pullRequestActivity: PullRequestActivity
       pullRequestMergeActivity: PullRequestMergeActivity
+      pullRequestReviewActivity: PullRequestReviewActivity
       repositoryActivity: RepositoryActivity
       commitActivity: CommitActivity
     }
@@ -82,6 +85,7 @@ function App() {
       goodFirstIssues,
       pullRequestActivity,
       pullRequestMergeActivity,
+      pullRequestReviewActivity,
       repositoryActivity,
       commitActivity,
     ] = await Promise.all([
@@ -90,6 +94,7 @@ function App() {
       fetchGoodFirstIssues(owner, repository),
       fetchOpenPullRequests(owner, repository),
       fetchPullRequestMergeActivity(owner, repository),
+      fetchPullRequestReviewActivity(owner, repository),
       fetchLatestCommit(owner, repository),
       fetchCommitActivity(owner, repository),
     ])
@@ -102,6 +107,7 @@ function App() {
       goodFirstIssues,
       pullRequestActivity,
       pullRequestMergeActivity,
+      pullRequestReviewActivity,
       repositoryActivity,
       commitActivity,
     })
@@ -172,6 +178,7 @@ function App() {
                 goodFirstIssues={lookupState.goodFirstIssues}
                 pullRequestActivity={lookupState.pullRequestActivity}
                 pullRequestMergeActivity={lookupState.pullRequestMergeActivity}
+                pullRequestReviewActivity={lookupState.pullRequestReviewActivity}
                 repositoryActivity={lookupState.repositoryActivity}
                 commitActivity={lookupState.commitActivity}
               />
@@ -207,6 +214,7 @@ function RepositoryResults({
   goodFirstIssues,
   pullRequestActivity,
   pullRequestMergeActivity,
+  pullRequestReviewActivity,
   repositoryActivity,
   commitActivity,
 }: {
@@ -216,6 +224,7 @@ function RepositoryResults({
   goodFirstIssues: GoodFirstIssues
   pullRequestActivity: PullRequestActivity
   pullRequestMergeActivity: PullRequestMergeActivity
+  pullRequestReviewActivity: PullRequestReviewActivity
   repositoryActivity: RepositoryActivity
   commitActivity: CommitActivity
 }) {
@@ -279,6 +288,7 @@ function RepositoryResults({
         repositoryUrl={repository.html_url}
         pullRequestActivity={pullRequestActivity}
         pullRequestMergeActivity={pullRequestMergeActivity}
+        pullRequestReviewActivity={pullRequestReviewActivity}
       />
 
       <RepositoryActivitySection
@@ -426,14 +436,17 @@ function PullRequestActivitySection({
   repositoryUrl,
   pullRequestActivity,
   pullRequestMergeActivity,
+  pullRequestReviewActivity,
 }: {
   repositoryUrl: string
   pullRequestActivity: PullRequestActivity
   pullRequestMergeActivity: PullRequestMergeActivity
+  pullRequestReviewActivity: PullRequestReviewActivity
 }) {
   const hasPullRequestData =
     pullRequestActivity.status === 'available' ||
-    pullRequestMergeActivity.status === 'available'
+    pullRequestMergeActivity.status === 'available' ||
+    pullRequestReviewActivity.status === 'available'
 
   return (
     <section
@@ -445,7 +458,7 @@ function PullRequestActivitySection({
         <h3 id="pull-request-activity">Pull request summary</h3>
         <p>
           Open and recently merged pull requests provide measurable context
-          about contribution activity and resolution speed.
+          about contribution activity, resolution speed, and responsiveness.
         </p>
       </div>
 
@@ -490,6 +503,10 @@ function PullRequestActivitySection({
           <div>
             <dt>{getMergeTimeLabel(pullRequestMergeActivity)}</dt>
             <dd>{formatMergeTime(pullRequestMergeActivity)}</dd>
+          </div>
+          <div>
+            <dt>{getFirstReviewTimeLabel(pullRequestReviewActivity)}</dt>
+            <dd>{formatFirstReviewTime(pullRequestReviewActivity)}</dd>
           </div>
         </dl>
       )}
@@ -692,6 +709,41 @@ function formatMergeTime(activity: PullRequestMergeActivity) {
   }
 
   const days = activity.medianMergeTimeDays
+
+  if (days < 1) {
+    return 'Less than a day'
+  }
+
+  return `${days} day${days === 1 ? '' : 's'}`
+}
+
+function getFirstReviewTimeLabel(activity: PullRequestReviewActivity) {
+  if (
+    activity.status === 'unavailable' ||
+    activity.firstReviewSampleSize === 0
+  ) {
+    return 'Median time to first review'
+  }
+
+  return `Median time to first review (${activity.firstReviewSampleSize} ${
+    activity.firstReviewSampleSize === 1 ? 'PR' : 'PRs'
+  } sampled)`
+}
+
+function formatFirstReviewTime(activity: PullRequestReviewActivity) {
+  if (activity.status === 'unavailable') {
+    return 'Unavailable'
+  }
+
+  if (activity.firstReviewSampleSize === 0) {
+    return 'No outside reviews'
+  }
+
+  if (activity.medianFirstReviewTimeDays === null) {
+    return 'Unavailable'
+  }
+
+  const days = activity.medianFirstReviewTimeDays
 
   if (days < 1) {
     return 'Less than a day'
