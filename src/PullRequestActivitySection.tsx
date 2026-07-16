@@ -5,6 +5,10 @@ import {
   type PullRequestReviewActivity,
 } from './githubApi'
 import {
+  formatAffiliatedReviewCoverage,
+  formatAffiliatedReviewCoverageNote,
+  formatAffiliatedReviewSampleNote,
+  formatAffiliatedReviewTime,
   formatAge,
   formatFirstReviewSampleNote,
   formatFirstReviewTime,
@@ -152,6 +156,36 @@ export function PullRequestActivitySection({
                     </span>
                     <span className="metric-note">
                       {formatReviewCoverageNote(reviewMetricsState.activity)}
+                    </span>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Median time to first repository-affiliated review</dt>
+                  <dd>
+                    <span className="metric-value">
+                      {formatAffiliatedReviewTime(
+                        reviewMetricsState.activity,
+                      )}
+                    </span>
+                    <span className="metric-note">
+                      {formatAffiliatedReviewSampleNote(
+                        reviewMetricsState.activity,
+                      )}
+                    </span>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Repository-affiliated review coverage</dt>
+                  <dd>
+                    <span className="metric-value">
+                      {formatAffiliatedReviewCoverage(
+                        reviewMetricsState.activity,
+                      )}
+                    </span>
+                    <span className="metric-note">
+                      {formatAffiliatedReviewCoverageNote(
+                        reviewMetricsState.activity,
+                      )}
                     </span>
                   </dd>
                 </div>
