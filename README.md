@@ -42,6 +42,9 @@ ContributeCheck is not meant to replace GitHub search. It is meant to make contr
   - shows the age of the oldest open pull request
   - lets users request median time to first outside review for a bounded sample of recent pull requests
   - lets users request outside review coverage for that bounded pull request sample
+  - explains how the review metrics are calculated
+  - lets users request median time to first repository-affiliated review
+  - lets users request repository-affiliated review coverage
   - links to the full open pull request list on GitHub
 - Initial framework detection:
   - checks the repository's root `package.json`

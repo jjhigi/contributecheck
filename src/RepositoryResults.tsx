@@ -86,18 +86,18 @@ export function RepositoryResults({
 
       <GoodFirstIssuesSection goodFirstIssues={goodFirstIssues} />
 
+      <RepositoryActivitySection
+        repositoryUrl={repository.html_url}
+        repositoryActivity={repositoryActivity}
+        commitActivity={commitActivity}
+      />
+
       <PullRequestActivitySection
         key={`${repository.owner.login}/${repository.name}`}
         owner={repository.owner.login}
         repositoryName={repository.name}
         repositoryUrl={repository.html_url}
         pullRequestActivity={pullRequestActivity}
-      />
-
-      <RepositoryActivitySection
-        repositoryUrl={repository.html_url}
-        repositoryActivity={repositoryActivity}
-        commitActivity={commitActivity}
       />
     </article>
   )

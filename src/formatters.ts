@@ -57,6 +57,32 @@ export function formatFramework(detection: FrameworkDetection) {
 }
 
 export function formatFirstReviewTime(activity: PullRequestReviewActivity) {
+  return formatReviewTime(
+    activity,
+    activity.status === 'available' ? activity.firstReviewSampleSize : 0,
+    activity.status === 'available'
+      ? activity.medianFirstReviewTimeDays
+      : null,
+  )
+}
+
+export function formatAffiliatedReviewTime(
+  activity: PullRequestReviewActivity,
+) {
+  return formatReviewTime(
+    activity,
+    activity.status === 'available' ? activity.affiliatedReviewSampleSize : 0,
+    activity.status === 'available'
+      ? activity.medianAffiliatedReviewTimeDays
+      : null,
+  )
+}
+
+function formatReviewTime(
+  activity: PullRequestReviewActivity,
+  sampleSize: number,
+  medianDays: number | null,
+) {
   if (activity.status === 'unavailable') {
     return 'Unavailable'
   }
@@ -65,15 +91,15 @@ export function formatFirstReviewTime(activity: PullRequestReviewActivity) {
     return 'No recent closed PRs'
   }
 
-  if (activity.firstReviewSampleSize === 0) {
+  if (sampleSize === 0) {
     return 'No valid timing data'
   }
 
-  if (activity.medianFirstReviewTimeDays === null) {
+  if (medianDays === null) {
     return 'Unavailable'
   }
 
-  return formatDuration(activity.medianFirstReviewTimeDays)
+  return formatDuration(medianDays)
 }
 
 export function formatFirstReviewSampleNote(
@@ -83,33 +109,80 @@ export function formatFirstReviewSampleNote(
     return 'Review sample unavailable'
   }
 
+  return formatReviewSampleNote(
+    activity,
+    activity.reviewedPullRequestCount,
+    activity.firstReviewSampleSize,
+    'outside',
+  )
+}
+
+export function formatAffiliatedReviewSampleNote(
+  activity: PullRequestReviewActivity,
+) {
+  if (activity.status === 'unavailable') {
+    return 'Review sample unavailable'
+  }
+
+  return formatReviewSampleNote(
+    activity,
+    activity.affiliatedReviewCount,
+    activity.affiliatedReviewSampleSize,
+    'repository-affiliated',
+  )
+}
+
+function formatReviewSampleNote(
+  activity: Extract<PullRequestReviewActivity, { status: 'available' }>,
+  reviewedCount: number,
+  sampleSize: number,
+  reviewType: string,
+) {
   if (activity.sampledPullRequestCount === 0) {
     return 'No recent closed PRs were available'
   }
 
-  if (activity.firstReviewSampleSize === 0) {
-    if (activity.reviewedPullRequestCount === 0) {
-      return `No outside reviews found in ${numberFormatter.format(
+  if (sampleSize === 0) {
+    if (reviewedCount === 0) {
+      return `No ${reviewType} reviews found in ${numberFormatter.format(
         activity.sampledPullRequestCount,
       )} recent closed PRs`
     }
 
     return `${numberFormatter.format(
-      activity.reviewedPullRequestCount,
+      reviewedCount,
     )} of ${numberFormatter.format(
       activity.sampledPullRequestCount,
-    )} recent closed PRs had outside reviews, but none had valid timing data`
+    )} recent closed PRs had ${reviewType} reviews, but none had valid timing data`
   }
 
-  const pullRequestLabel =
-    activity.firstReviewSampleSize === 1 ? 'PR' : 'PRs'
+  const pullRequestLabel = sampleSize === 1 ? 'PR' : 'PRs'
 
   return `${numberFormatter.format(
-    activity.firstReviewSampleSize,
+    sampleSize,
   )} ${pullRequestLabel} with valid timing data`
 }
 
 export function formatReviewCoverage(activity: PullRequestReviewActivity) {
+  return formatCoverage(
+    activity,
+    activity.status === 'available' ? activity.reviewedPullRequestCount : 0,
+  )
+}
+
+export function formatAffiliatedReviewCoverage(
+  activity: PullRequestReviewActivity,
+) {
+  return formatCoverage(
+    activity,
+    activity.status === 'available' ? activity.affiliatedReviewCount : 0,
+  )
+}
+
+function formatCoverage(
+  activity: PullRequestReviewActivity,
+  reviewedCount: number,
+) {
   if (activity.status === 'unavailable') {
     return 'Unavailable'
   }
@@ -119,7 +192,7 @@ export function formatReviewCoverage(activity: PullRequestReviewActivity) {
   }
 
   const coverage = Math.round(
-    (activity.reviewedPullRequestCount / activity.sampledPullRequestCount) *
+    (reviewedCount / activity.sampledPullRequestCount) *
       100,
   )
 
@@ -128,6 +201,28 @@ export function formatReviewCoverage(activity: PullRequestReviewActivity) {
 
 export function formatReviewCoverageNote(
   activity: PullRequestReviewActivity,
+) {
+  return formatCoverageNote(
+    activity,
+    activity.status === 'available' ? activity.reviewedPullRequestCount : 0,
+    'an outside review',
+  )
+}
+
+export function formatAffiliatedReviewCoverageNote(
+  activity: PullRequestReviewActivity,
+) {
+  return formatCoverageNote(
+    activity,
+    activity.status === 'available' ? activity.affiliatedReviewCount : 0,
+    'a repository-affiliated review',
+  )
+}
+
+function formatCoverageNote(
+  activity: PullRequestReviewActivity,
+  reviewedCount: number,
+  reviewLabel: string,
 ) {
   if (activity.status === 'unavailable') {
     return 'Review sample unavailable'
@@ -141,10 +236,10 @@ export function formatReviewCoverageNote(
     activity.sampledPullRequestCount === 1 ? 'PR' : 'PRs'
 
   return `${numberFormatter.format(
-    activity.reviewedPullRequestCount,
+    reviewedCount,
   )} of ${numberFormatter.format(
     activity.sampledPullRequestCount,
-  )} recent closed ${pullRequestLabel} received an outside review`
+  )} recent closed ${pullRequestLabel} received ${reviewLabel}`
 }
 
 function formatDuration(days: number) {
