@@ -118,6 +118,10 @@ export function PullRequestActivitySection({
 
       {isReviewMetricsExpanded && (
         <div className="review-metrics-panel" id="review-metrics">
+          <p className="review-metrics-scope">
+            Based on up to 10 recently updated closed pull requests.
+          </p>
+
           {reviewMetricsState.status === 'loading' && (
             <p className="pull-request-activity-muted">
               Loading review metrics...

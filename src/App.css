@@ -287,6 +287,12 @@
   border-top: 1px solid var(--border);
 }
 
+.review-metrics-scope {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .review-metrics-panel .error-message {
   color: var(--danger);
 }

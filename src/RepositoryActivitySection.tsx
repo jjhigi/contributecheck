@@ -61,7 +61,7 @@ export function RepositoryActivitySection({
               </dd>
             </div>
             <div>
-              <dt>Last 4 weeks</dt>
+              <dt>Commits, last 4 weeks</dt>
               <dd>
                 {commitActivity.status === 'available'
                   ? numberFormatter.format(recentCommitCount)
@@ -104,7 +104,7 @@ function CommitActivityChart({
 }) {
   return (
     <div className="commit-activity-chart-wrap">
-      <p className="commit-activity-heading">12-week commit activity</p>
+      <p className="commit-activity-heading">Weekly commits, last 12 weeks</p>
       <div
         className="commit-activity-chart"
         role="img"
