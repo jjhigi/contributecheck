@@ -46,9 +46,10 @@ ContributeCheck is not meant to replace GitHub search. It is meant to make contr
   - lets users request median time to first repository-affiliated review
   - lets users request repository-affiliated review coverage
   - links to the full open pull request list on GitHub
-- Initial framework detection:
+- Framework detection:
   - checks the repository's root `package.json`
-  - detects direct dependencies for Next.js, React, Vue, Angular, and Svelte
+  - checks a bounded set of workspace package manifests
+  - detects Next.js, React, Vue, Angular, Svelte, and Electron signals
 - Repository activity summary:
   - shows the latest commit date
   - shows the total commits from the last 4 weeks

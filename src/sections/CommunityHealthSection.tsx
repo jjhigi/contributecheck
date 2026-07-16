@@ -1,4 +1,4 @@
-import type { CommunityHealth } from './githubApi'
+import type { CommunityHealth } from '../github/repositoryApi'
 
 export function CommunityHealthSection({
   communityHealth,

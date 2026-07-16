@@ -2,8 +2,8 @@ import type {
   CommitActivity,
   CommitActivityWeek,
   RepositoryActivity,
-} from './githubApi'
-import { formatDate, numberFormatter } from './formatters'
+} from '../github/activityApi'
+import { formatDate, numberFormatter } from '../formatters'
 
 export function RepositoryActivitySection({
   repositoryUrl,

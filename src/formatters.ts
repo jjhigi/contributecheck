@@ -1,4 +1,5 @@
-import type { FrameworkDetection, PullRequestReviewActivity } from './githubApi'
+import type { FrameworkDetection } from './github/frameworkDetection'
+import type { PullRequestReviewActivity } from './github/activityApi'
 
 export const numberFormatter = new Intl.NumberFormat('en-US')
 
@@ -50,7 +51,7 @@ export function formatFramework(detection: FrameworkDetection) {
     case 'detected':
       return detection.framework
     case 'not-detected':
-      return 'Not detected'
+      return 'No supported framework detected'
     case 'unavailable':
       return 'Unavailable'
   }

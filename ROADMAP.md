@@ -32,8 +32,8 @@ Status:
 
 - Community health files: complete
 - Good First Issue detection: complete
-- Framework detection, initial root-manifest version: complete
-- Framework detection for monorepos and additional ecosystems: planned
+- Framework detection for root and bounded workspace manifests: complete
+- Framework detection for additional ecosystems: planned
 
 ## Phase 3: Repository Health Metrics
 
@@ -91,8 +91,9 @@ signals, good first issue detection, and an initial pull request health
 summary with open pull request activity. Review timing, outside-review
 coverage, and repository-affiliated review coverage are available on demand
 for a bounded sample, with an in-card calculation explanation. It also
-provides an initial framework signal for supported direct dependencies in a
-repository's root `package.json`, plus a 12-week commit activity trend. The
+provides framework signals from supported dependencies and package names in a
+repository's root or bounded workspace manifests, plus a 12-week commit
+activity trend. The
 pull request summary keeps merge and first-time contributor metrics deferred
 until they can provide a clearer signal with a more efficient analysis.
 The next recommended work is deeper maintainer responsiveness analysis.
