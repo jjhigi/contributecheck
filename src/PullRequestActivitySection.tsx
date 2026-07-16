@@ -31,6 +31,7 @@ export function PullRequestActivitySection({
 }) {
   const [isReviewMetricsExpanded, setIsReviewMetricsExpanded] =
     useState(false)
+  const [isCalculationExpanded, setIsCalculationExpanded] = useState(false)
   const [reviewMetricsState, setReviewMetricsState] =
     useState<ReviewMetricsState>({ status: 'idle' })
 
@@ -156,6 +157,34 @@ export function PullRequestActivitySection({
                 </div>
               </dl>
             )}
+
+          <button
+            className="review-metrics-toggle metric-explanation-toggle"
+            type="button"
+            aria-controls="review-metrics-explanation"
+            aria-expanded={isCalculationExpanded}
+            onClick={() => setIsCalculationExpanded((expanded) => !expanded)}
+          >
+            How is this calculated?
+          </button>
+
+          {isCalculationExpanded && (
+            <div
+              className="metric-explanation"
+              id="review-metrics-explanation"
+            >
+              <p>Uses up to 10 recently updated closed pull requests.</p>
+              <p>
+                For each PR, the first submitted review from someone other
+                than the author is used to measure review timing.
+              </p>
+              <p>
+                Median timing uses only PRs with valid timing data. Coverage
+                is the percentage of sampled PRs with a qualifying outside
+                review.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

@@ -89,7 +89,8 @@ Status:
 The current implementation provides repository details, community health file
 signals, good first issue detection, and an initial pull request health
 summary with open pull request activity. Review timing and outside-review
-coverage are available on demand for a bounded sample. It also
+coverage are available on demand for a bounded sample, with an in-card
+calculation explanation. It also
 provides an initial framework signal for supported direct dependencies in a
 repository's root `package.json`, plus a 12-week commit activity trend. The
 pull request summary keeps merge and first-time contributor metrics deferred

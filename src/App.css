@@ -269,6 +269,19 @@
   opacity: 0.78;
 }
 
+.metric-explanation-toggle {
+  margin-top: 20px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+}
+
+.metric-explanation-toggle:hover {
+  background: transparent;
+  color: var(--accent);
+}
+
 .review-metrics-panel {
   padding-top: 20px;
   border-top: 1px solid var(--border);
@@ -294,6 +307,21 @@
   font-size: 0.72rem;
   font-weight: 500;
   line-height: 1.35;
+}
+
+.metric-explanation {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.pull-request-activity .metric-explanation p {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.metric-explanation p + p {
+  margin-top: 8px;
 }
 
 .community-health-list {
