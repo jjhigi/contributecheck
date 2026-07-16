@@ -3,7 +3,7 @@ import {
   fetchPullRequestReviewActivity,
   type PullRequestActivity,
   type PullRequestReviewActivity,
-} from './githubApi'
+} from '../github/activityApi'
 import {
   formatAffiliatedReviewCoverage,
   formatAffiliatedReviewCoverageNote,
@@ -15,7 +15,7 @@ import {
   formatReviewCoverage,
   formatReviewCoverageNote,
   numberFormatter,
-} from './formatters'
+} from '../formatters'
 
 type ReviewMetricsState =
   | { status: 'idle' }

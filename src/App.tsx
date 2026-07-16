@@ -1,22 +1,26 @@
 import { useState, type FormEvent } from 'react'
 import './App.css'
 import {
-  fetchCommunityHealth,
   fetchCommitActivity,
-  fetchFrameworkDetection,
-  fetchGoodFirstIssues,
   fetchLatestCommit,
   fetchOpenPullRequests,
-  fetchRepository,
-  type CommunityHealth,
   type CommitActivity,
-  type FrameworkDetection,
-  type GitHubRepository,
-  type GoodFirstIssues,
   type PullRequestActivity,
   type RepositoryActivity,
+} from './github/activityApi'
+import {
+  fetchCommunityHealth,
+  fetchGoodFirstIssues,
+  fetchRepository,
+  type CommunityHealth,
+  type GitHubRepository,
+  type GoodFirstIssues,
   type RepositoryFetchResult,
-} from './githubApi'
+} from './github/repositoryApi'
+import {
+  fetchFrameworkDetection,
+  type FrameworkDetection,
+} from './github/frameworkDetection'
 import { RepositoryResults } from './RepositoryResults'
 import { parseRepositoryInput } from './repositoryInput'
 

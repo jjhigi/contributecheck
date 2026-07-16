@@ -1,4 +1,4 @@
-import type { GoodFirstIssues } from './githubApi'
+import type { GoodFirstIssues } from '../github/repositoryApi'
 
 export function GoodFirstIssuesSection({
   goodFirstIssues,

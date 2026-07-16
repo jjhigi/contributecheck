@@ -1,16 +1,18 @@
 import type {
   CommunityHealth,
-  CommitActivity,
-  FrameworkDetection,
   GitHubRepository,
   GoodFirstIssues,
+} from './github/repositoryApi'
+import type {
+  CommitActivity,
   PullRequestActivity,
   RepositoryActivity,
-} from './githubApi'
-import { CommunityHealthSection } from './CommunityHealthSection'
-import { GoodFirstIssuesSection } from './GoodFirstIssuesSection'
-import { PullRequestActivitySection } from './PullRequestActivitySection'
-import { RepositoryActivitySection } from './RepositoryActivitySection'
+} from './github/activityApi'
+import type { FrameworkDetection } from './github/frameworkDetection'
+import { CommunityHealthSection } from './sections/CommunityHealthSection'
+import { GoodFirstIssuesSection } from './sections/GoodFirstIssuesSection'
+import { PullRequestActivitySection } from './sections/PullRequestActivitySection'
+import { RepositoryActivitySection } from './sections/RepositoryActivitySection'
 import { formatDate, formatFramework, numberFormatter } from './formatters'
 
 export function RepositoryResults({
@@ -60,7 +62,7 @@ export function RepositoryResults({
             <dd>{repository.language || 'Not specified'}</dd>
           </div>
           <div>
-            <dt>Framework</dt>
+            <dt>Framework / stack</dt>
             <dd>{formatFramework(frameworkDetection)}</dd>
           </div>
           <div>
