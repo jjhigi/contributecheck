@@ -294,7 +294,10 @@ export async function fetchOpenPullRequests(
   }
 }
 
-/** Fetch first-review timing for a bounded sample of recently updated pull requests. */
+/**
+ * Fetch review timing and outside-review coverage for a bounded sample of
+ * recently updated pull requests.
+ */
 export async function fetchPullRequestReviewActivity(
   owner: string,
   repository: string,
@@ -322,13 +325,15 @@ export async function fetchPullRequestReviewActivity(
       return { status: 'unavailable' }
     }
 
+    const successfulReviewResults =
+      reviewResults as GitHubPullRequestReview[][]
     const outsideReviewStats = getReviewStats(
       pullRequests,
-      reviewResults as GitHubPullRequestReview[][],
+      successfulReviewResults,
     )
     const affiliatedReviewStats = getReviewStats(
       pullRequests,
-      reviewResults as GitHubPullRequestReview[][],
+      successfulReviewResults,
       isRepositoryAffiliatedReview,
     )
 
