@@ -1,34 +1,68 @@
-import type {
-  PullRequestActivity,
-  PullRequestMergeActivity,
-  PullRequestReviewActivity,
+import { useState } from 'react'
+import {
+  fetchPullRequestReviewActivity,
+  type PullRequestActivity,
+  type PullRequestReviewActivity,
 } from './githubApi'
 import {
   formatAge,
+  formatFirstReviewSampleNote,
   formatFirstReviewTime,
-  formatMergeRate,
-  formatMergeTime,
   formatReviewCoverage,
-  getFirstReviewTimeLabel,
-  getMergeTimeLabel,
+  formatReviewCoverageNote,
   numberFormatter,
 } from './formatters'
 
+type ReviewMetricsState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'loaded'; activity: PullRequestReviewActivity }
+
 export function PullRequestActivitySection({
+  owner,
+  repositoryName,
   repositoryUrl,
   pullRequestActivity,
-  pullRequestMergeActivity,
-  pullRequestReviewActivity,
 }: {
+  owner: string
+  repositoryName: string
   repositoryUrl: string
   pullRequestActivity: PullRequestActivity
-  pullRequestMergeActivity: PullRequestMergeActivity
-  pullRequestReviewActivity: PullRequestReviewActivity
 }) {
-  const hasPullRequestData =
-    pullRequestActivity.status === 'available' ||
-    pullRequestMergeActivity.status === 'available' ||
-    pullRequestReviewActivity.status === 'available'
+  const [isReviewMetricsExpanded, setIsReviewMetricsExpanded] =
+    useState(false)
+  const [reviewMetricsState, setReviewMetricsState] =
+    useState<ReviewMetricsState>({ status: 'idle' })
+
+  async function handleReviewMetricsClick() {
+    if (reviewMetricsState.status === 'loading') {
+      return
+    }
+
+    const shouldRetry =
+      reviewMetricsState.status === 'loaded' &&
+      reviewMetricsState.activity.status === 'unavailable'
+
+    if (reviewMetricsState.status === 'idle' || shouldRetry) {
+      setIsReviewMetricsExpanded(true)
+      setReviewMetricsState({ status: 'loading' })
+
+      const activity = await fetchPullRequestReviewActivity(
+        owner,
+        repositoryName,
+      )
+
+      setReviewMetricsState({ status: 'loaded', activity })
+      return
+    }
+
+    setIsReviewMetricsExpanded((expanded) => !expanded)
+  }
+
+  const reviewMetricsButtonLabel = getReviewMetricsButtonLabel(
+    isReviewMetricsExpanded,
+    reviewMetricsState,
+  )
 
   return (
     <section
@@ -39,12 +73,13 @@ export function PullRequestActivitySection({
         <p className="result-label">Pull request activity</p>
         <h3 id="pull-request-activity">Pull request summary</h3>
         <p>
-          Open and recently merged pull requests provide measurable context
-          about contribution activity, resolution speed, and responsiveness.
+          Open pull requests show current contribution activity. Review
+          metrics provide additional context about how quickly outside
+          contributions receive attention.
         </p>
       </div>
 
-      {!hasPullRequestData ? (
+      {pullRequestActivity.status !== 'available' ? (
         <p className="pull-request-activity-muted">
           Pull request data is unavailable for this repository.
         </p>
@@ -52,49 +87,76 @@ export function PullRequestActivitySection({
         <dl className="repository-details pull-request-summary">
           <div>
             <dt>Open pull requests</dt>
-            <dd>
-              {pullRequestActivity.status === 'available'
-                ? numberFormatter.format(pullRequestActivity.openCount)
-                : 'Unavailable'}
-            </dd>
+            <dd>{numberFormatter.format(pullRequestActivity.openCount)}</dd>
           </div>
           <div>
             <dt>Oldest open</dt>
             <dd>
-              {pullRequestActivity.status !== 'available'
-                ? 'Unavailable'
-                : pullRequestActivity.openCount > 0
-                  ? formatAge(pullRequestActivity.oldestOpenedAt || '')
-                  : 'None'}
+              {pullRequestActivity.openCount > 0
+                ? formatAge(pullRequestActivity.oldestOpenedAt || '')
+                : 'None'}
             </dd>
-          </div>
-          <div>
-            <dt>Merged (90 days)</dt>
-            <dd>
-              {pullRequestMergeActivity.status === 'available'
-                ? numberFormatter.format(
-                    pullRequestMergeActivity.mergedCount,
-                  )
-                : 'Unavailable'}
-            </dd>
-          </div>
-          <div>
-            <dt>Merge rate (90 days)</dt>
-            <dd>{formatMergeRate(pullRequestMergeActivity)}</dd>
-          </div>
-          <div>
-            <dt>{getMergeTimeLabel(pullRequestMergeActivity)}</dt>
-            <dd>{formatMergeTime(pullRequestMergeActivity)}</dd>
-          </div>
-          <div>
-            <dt>{getFirstReviewTimeLabel(pullRequestReviewActivity)}</dt>
-            <dd>{formatFirstReviewTime(pullRequestReviewActivity)}</dd>
-          </div>
-          <div>
-            <dt>Outside review coverage</dt>
-            <dd>{formatReviewCoverage(pullRequestReviewActivity)}</dd>
           </div>
         </dl>
+      )}
+
+      <button
+        className="review-metrics-toggle"
+        type="button"
+        aria-controls="review-metrics"
+        aria-expanded={isReviewMetricsExpanded}
+        onClick={handleReviewMetricsClick}
+        disabled={reviewMetricsState.status === 'loading'}
+      >
+        {reviewMetricsButtonLabel}
+      </button>
+
+      {isReviewMetricsExpanded && (
+        <div className="review-metrics-panel" id="review-metrics">
+          {reviewMetricsState.status === 'loading' && (
+            <p className="pull-request-activity-muted">
+              Loading review metrics...
+            </p>
+          )}
+
+          {reviewMetricsState.status === 'loaded' &&
+            reviewMetricsState.activity.status === 'unavailable' && (
+              <p className="error-message">
+                Review metrics are unavailable right now. Try again in a
+                moment.
+              </p>
+            )}
+
+          {reviewMetricsState.status === 'loaded' &&
+            reviewMetricsState.activity.status === 'available' && (
+              <dl className="repository-details review-metrics-details">
+                <div>
+                  <dt>Median time to first outside review</dt>
+                  <dd>
+                    <span className="metric-value">
+                      {formatFirstReviewTime(reviewMetricsState.activity)}
+                    </span>
+                    <span className="metric-note">
+                      {formatFirstReviewSampleNote(
+                        reviewMetricsState.activity,
+                      )}
+                    </span>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Outside review coverage</dt>
+                  <dd>
+                    <span className="metric-value">
+                      {formatReviewCoverage(reviewMetricsState.activity)}
+                    </span>
+                    <span className="metric-note">
+                      {formatReviewCoverageNote(reviewMetricsState.activity)}
+                    </span>
+                  </dd>
+                </div>
+              </dl>
+            )}
+        </div>
       )}
 
       <a
@@ -107,4 +169,19 @@ export function PullRequestActivitySection({
       </a>
     </section>
   )
+}
+
+function getReviewMetricsButtonLabel(
+  isExpanded: boolean,
+  state: ReviewMetricsState,
+) {
+  if (state.status === 'loading') {
+    return 'Loading review metrics...'
+  }
+
+  if (state.status === 'loaded' && state.activity.status === 'unavailable') {
+    return 'Retry review metrics'
+  }
+
+  return isExpanded ? 'Hide review metrics' : 'Show review metrics'
 }

@@ -7,8 +7,6 @@ import {
   fetchGoodFirstIssues,
   fetchLatestCommit,
   fetchOpenPullRequests,
-  fetchPullRequestMergeActivity,
-  fetchPullRequestReviewActivity,
   fetchRepository,
   type CommunityHealth,
   type CommitActivity,
@@ -16,8 +14,6 @@ import {
   type GitHubRepository,
   type GoodFirstIssues,
   type PullRequestActivity,
-  type PullRequestMergeActivity,
-  type PullRequestReviewActivity,
   type RepositoryActivity,
   type RepositoryFetchResult,
 } from './githubApi'
@@ -34,8 +30,6 @@ type LookupState =
       communityHealth: CommunityHealth
       goodFirstIssues: GoodFirstIssues
       pullRequestActivity: PullRequestActivity
-      pullRequestMergeActivity: PullRequestMergeActivity
-      pullRequestReviewActivity: PullRequestReviewActivity
       repositoryActivity: RepositoryActivity
       commitActivity: CommitActivity
     }
@@ -77,8 +71,6 @@ function App() {
       communityHealth,
       goodFirstIssues,
       pullRequestActivity,
-      pullRequestMergeActivity,
-      pullRequestReviewActivity,
       repositoryActivity,
       commitActivity,
     ] = await Promise.all([
@@ -86,8 +78,6 @@ function App() {
       fetchCommunityHealth(owner, repository),
       fetchGoodFirstIssues(owner, repository),
       fetchOpenPullRequests(owner, repository),
-      fetchPullRequestMergeActivity(owner, repository),
-      fetchPullRequestReviewActivity(owner, repository),
       fetchLatestCommit(owner, repository),
       fetchCommitActivity(owner, repository),
     ])
@@ -99,8 +89,6 @@ function App() {
       communityHealth,
       goodFirstIssues,
       pullRequestActivity,
-      pullRequestMergeActivity,
-      pullRequestReviewActivity,
       repositoryActivity,
       commitActivity,
     })
@@ -167,8 +155,6 @@ function App() {
                 communityHealth={lookupState.communityHealth}
                 goodFirstIssues={lookupState.goodFirstIssues}
                 pullRequestActivity={lookupState.pullRequestActivity}
-                pullRequestMergeActivity={lookupState.pullRequestMergeActivity}
-                pullRequestReviewActivity={lookupState.pullRequestReviewActivity}
                 repositoryActivity={lookupState.repositoryActivity}
                 commitActivity={lookupState.commitActivity}
               />

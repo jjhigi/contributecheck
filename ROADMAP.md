@@ -66,9 +66,8 @@ Goal: Analyze pull request and contributor patterns to estimate how approachable
 Status:
 
 - Pull request activity summary: complete
-- Pull request merge activity, initial 90-day version: complete
-- Pull request resolution time, initial 90-day sample: complete
-- Maintainer responsiveness, initial review timing and coverage: complete
+- Pull request merge and resolution metrics: deferred
+- Maintainer responsiveness, on-demand initial review timing and coverage: complete
 - Deeper pull request analysis: planned
 - Broader maintainer responsiveness analysis: planned
 - First-time contributor metrics: planned
@@ -89,12 +88,13 @@ Status:
 
 The current implementation provides repository details, community health file
 signals, good first issue detection, and an initial pull request health
-summary with open, merged, closed, and resolution-time activity. It also
+summary with open pull request activity. Review timing and outside-review
+coverage are available on demand for a bounded sample. It also
 provides an initial framework signal for supported direct dependencies in a
 repository's root `package.json`, plus a 12-week commit activity trend. The
-pull request summary also includes a bounded first-review responsiveness
-sample with outside-review coverage. The next recommended work is deeper
-maintainer responsiveness analysis and first-time contributor metrics.
+pull request summary keeps merge and first-time contributor metrics deferred
+until they can provide a clearer signal with a more efficient analysis.
+The next recommended work is deeper maintainer responsiveness analysis.
 Framework detection for monorepos and
 additional ecosystems remains planned, while release history is optional
 future work.

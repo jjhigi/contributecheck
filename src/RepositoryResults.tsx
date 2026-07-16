@@ -5,8 +5,6 @@ import type {
   GitHubRepository,
   GoodFirstIssues,
   PullRequestActivity,
-  PullRequestMergeActivity,
-  PullRequestReviewActivity,
   RepositoryActivity,
 } from './githubApi'
 import { CommunityHealthSection } from './CommunityHealthSection'
@@ -21,8 +19,6 @@ export function RepositoryResults({
   communityHealth,
   goodFirstIssues,
   pullRequestActivity,
-  pullRequestMergeActivity,
-  pullRequestReviewActivity,
   repositoryActivity,
   commitActivity,
 }: {
@@ -31,8 +27,6 @@ export function RepositoryResults({
   communityHealth: CommunityHealth
   goodFirstIssues: GoodFirstIssues
   pullRequestActivity: PullRequestActivity
-  pullRequestMergeActivity: PullRequestMergeActivity
-  pullRequestReviewActivity: PullRequestReviewActivity
   repositoryActivity: RepositoryActivity
   commitActivity: CommitActivity
 }) {
@@ -93,10 +87,11 @@ export function RepositoryResults({
       <GoodFirstIssuesSection goodFirstIssues={goodFirstIssues} />
 
       <PullRequestActivitySection
+        key={`${repository.owner.login}/${repository.name}`}
+        owner={repository.owner.login}
+        repositoryName={repository.name}
         repositoryUrl={repository.html_url}
         pullRequestActivity={pullRequestActivity}
-        pullRequestMergeActivity={pullRequestMergeActivity}
-        pullRequestReviewActivity={pullRequestReviewActivity}
       />
 
       <RepositoryActivitySection

@@ -229,6 +229,73 @@
   color: var(--text);
 }
 
+.review-metrics-toggle {
+  align-self: flex-start;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 10px 14px;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.review-metrics-toggle::after {
+  content: '+';
+  display: inline-block;
+  margin-left: 8px;
+}
+
+.review-metrics-toggle[aria-expanded='true']::after {
+  content: '-';
+}
+
+.review-metrics-toggle:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.review-metrics-toggle:focus-visible {
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 3px;
+}
+
+.review-metrics-toggle:disabled {
+  cursor: progress;
+  opacity: 0.78;
+}
+
+.review-metrics-panel {
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.review-metrics-panel .error-message {
+  color: var(--danger);
+}
+
+.review-metrics-details {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.review-metrics-details .metric-value,
+.review-metrics-details .metric-note {
+  display: block;
+}
+
+.review-metrics-details .metric-note {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
 .community-health-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
