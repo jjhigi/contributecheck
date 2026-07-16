@@ -67,7 +67,7 @@ Status:
 
 - Pull request activity summary: complete
 - Pull request merge and resolution metrics: deferred
-- Maintainer responsiveness, on-demand initial review timing and coverage: complete
+- Maintainer responsiveness, on-demand review timing and affiliation coverage: complete
 - Deeper pull request analysis: planned
 - Broader maintainer responsiveness analysis: planned
 - First-time contributor metrics: planned
@@ -88,9 +88,9 @@ Status:
 
 The current implementation provides repository details, community health file
 signals, good first issue detection, and an initial pull request health
-summary with open pull request activity. Review timing and outside-review
-coverage are available on demand for a bounded sample, with an in-card
-calculation explanation. It also
+summary with open pull request activity. Review timing, outside-review
+coverage, and repository-affiliated review coverage are available on demand
+for a bounded sample, with an in-card calculation explanation. It also
 provides an initial framework signal for supported direct dependencies in a
 repository's root `package.json`, plus a 12-week commit activity trend. The
 pull request summary keeps merge and first-time contributor metrics deferred

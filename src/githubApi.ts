@@ -38,6 +38,7 @@ type GitHubPullRequest = {
 
 type GitHubPullRequestReview = {
   submitted_at?: string | null
+  author_association?: string
   user?: {
     login?: string
   } | null
@@ -98,6 +99,9 @@ export type PullRequestReviewActivity =
       firstReviewSampleSize: number
       reviewedPullRequestCount: number
       sampledPullRequestCount: number
+      medianAffiliatedReviewTimeDays: number | null
+      affiliatedReviewSampleSize: number
+      affiliatedReviewCount: number
     }
   | { status: 'unavailable' }
 
@@ -144,6 +148,11 @@ const githubHeaders = {
 
 const recentReviewPullRequestSampleSize = 10
 const dayMilliseconds = 24 * 60 * 60 * 1000
+const repositoryAffiliatedAssociations = new Set([
+  'OWNER',
+  'MEMBER',
+  'COLLABORATOR',
+])
 
 const frameworkDependencies: Array<{
   framework: SupportedFramework
@@ -318,20 +327,25 @@ export async function fetchPullRequestReviewActivity(
 
     const successfulReviewResults =
       reviewResults as GitHubPullRequestReview[][]
-    const firstReviewStats = getFirstReviewTimeStats(
+    const outsideReviewStats = getReviewStats(
       pullRequests,
       successfulReviewResults,
+    )
+    const affiliatedReviewStats = getReviewStats(
+      pullRequests,
+      successfulReviewResults,
+      isRepositoryAffiliatedReview,
     )
 
     return {
       status: 'available',
-      medianFirstReviewTimeDays: firstReviewStats.medianDays,
-      firstReviewSampleSize: firstReviewStats.sampleSize,
-      reviewedPullRequestCount: getReviewedPullRequestCount(
-        pullRequests,
-        successfulReviewResults,
-      ),
+      medianFirstReviewTimeDays: outsideReviewStats.medianDays,
+      firstReviewSampleSize: outsideReviewStats.sampleSize,
+      reviewedPullRequestCount: outsideReviewStats.reviewedPullRequestCount,
       sampledPullRequestCount: pullRequests.length,
+      medianAffiliatedReviewTimeDays: affiliatedReviewStats.medianDays,
+      affiliatedReviewSampleSize: affiliatedReviewStats.sampleSize,
+      affiliatedReviewCount: affiliatedReviewStats.reviewedPullRequestCount,
     }
   } catch {
     return { status: 'unavailable' }
@@ -361,9 +375,10 @@ async function fetchPullRequestReviews(
   }
 }
 
-function getFirstReviewTimeStats(
+function getReviewStats(
   pullRequests: GitHubPullRequest[],
   reviewResults: GitHubPullRequestReview[][],
+  qualifiesReview: (review: GitHubPullRequestReview) => boolean = () => true,
 ) {
   const durations = pullRequests
     .map((pullRequest, index) => {
@@ -378,6 +393,7 @@ function getFirstReviewTimeStats(
             !authorLogin ||
             !reviewerLogin ||
             reviewerLogin === authorLogin ||
+            !qualifiesReview(review) ||
             !Number.isFinite(createdAt) ||
             !Number.isFinite(submittedAt) ||
             submittedAt < createdAt
@@ -396,7 +412,15 @@ function getFirstReviewTimeStats(
     .sort((firstDuration, secondDuration) => firstDuration - secondDuration)
 
   if (durations.length === 0) {
-    return { medianDays: null, sampleSize: 0 }
+    return {
+      medianDays: null,
+      sampleSize: 0,
+      reviewedPullRequestCount: getReviewedPullRequestCount(
+        pullRequests,
+        reviewResults,
+        qualifiesReview,
+      ),
+    }
   }
 
   const middleIndex = Math.floor(durations.length / 2)
@@ -408,12 +432,18 @@ function getFirstReviewTimeStats(
   return {
     medianDays: Math.round(medianDuration / dayMilliseconds),
     sampleSize: durations.length,
+    reviewedPullRequestCount: getReviewedPullRequestCount(
+      pullRequests,
+      reviewResults,
+      qualifiesReview,
+    ),
   }
 }
 
 function getReviewedPullRequestCount(
   pullRequests: GitHubPullRequest[],
   reviewResults: GitHubPullRequestReview[][],
+  qualifiesReview: (review: GitHubPullRequestReview) => boolean = () => true,
 ) {
   return pullRequests.reduce((reviewedCount, pullRequest, index) => {
     const authorLogin = pullRequest.user?.login?.toLowerCase()
@@ -422,15 +452,22 @@ function getReviewedPullRequestCount(
       const submittedAt = Date.parse(review.submitted_at || '')
 
       return Boolean(
-        authorLogin &&
+          authorLogin &&
           reviewerLogin &&
           reviewerLogin !== authorLogin &&
+          qualifiesReview(review) &&
           Number.isFinite(submittedAt),
       )
     })
 
     return reviewedCount + (hasOutsideReview ? 1 : 0)
   }, 0)
+}
+
+function isRepositoryAffiliatedReview(review: GitHubPullRequestReview) {
+  return repositoryAffiliatedAssociations.has(
+    review.author_association?.toUpperCase() || '',
+  )
 }
 
 function getGitHubCollectionCount(
