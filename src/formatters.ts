@@ -1,8 +1,4 @@
-import type {
-  FrameworkDetection,
-  PullRequestMergeActivity,
-  PullRequestReviewActivity,
-} from './githubApi'
+import type { FrameworkDetection, PullRequestReviewActivity } from './githubApi'
 
 export const numberFormatter = new Intl.NumberFormat('en-US')
 
@@ -60,72 +56,17 @@ export function formatFramework(detection: FrameworkDetection) {
   }
 }
 
-export function formatMergeRate(activity: PullRequestMergeActivity) {
-  if (activity.status === 'unavailable') {
-    return 'Unavailable'
-  }
-
-  if (activity.closedCount === 0) {
-    return 'No closed PRs'
-  }
-
-  const mergeRate = Math.round(
-    (activity.mergedCount / activity.closedCount) * 100,
-  )
-
-  return `${mergeRate}% (${numberFormatter.format(
-    activity.mergedCount,
-  )} of ${numberFormatter.format(activity.closedCount)})`
-}
-
-export function getMergeTimeLabel(activity: PullRequestMergeActivity) {
-  if (activity.status === 'unavailable') {
-    return 'Median merge time'
-  }
-
-  return `Median merge time (${activity.mergeTimeSampleSize} ${
-    activity.mergeTimeSampleSize === 1 ? 'PR' : 'PRs'
-  } sampled)`
-}
-
-export function formatMergeTime(activity: PullRequestMergeActivity) {
-  if (activity.status === 'unavailable') {
-    return 'Unavailable'
-  }
-
-  if (activity.mergedCount === 0) {
-    return 'No merged PRs'
-  }
-
-  if (activity.medianMergeTimeDays === null) {
-    return 'Unavailable'
-  }
-
-  return formatDuration(activity.medianMergeTimeDays)
-}
-
-export function getFirstReviewTimeLabel(
-  activity: PullRequestReviewActivity,
-) {
-  if (
-    activity.status === 'unavailable' ||
-    activity.firstReviewSampleSize === 0
-  ) {
-    return 'Median time to first review'
-  }
-
-  return `Median time to first review (${activity.firstReviewSampleSize} ${
-    activity.firstReviewSampleSize === 1 ? 'PR' : 'PRs'
-  } sampled)`
-}
-
 export function formatFirstReviewTime(activity: PullRequestReviewActivity) {
   if (activity.status === 'unavailable') {
     return 'Unavailable'
   }
 
+  if (activity.sampledPullRequestCount === 0) {
+    return 'No recent closed PRs'
+  }
+
   if (activity.firstReviewSampleSize === 0) {
-    return 'No outside reviews'
+    return 'No valid timing data'
   }
 
   if (activity.medianFirstReviewTimeDays === null) {
@@ -133,6 +74,39 @@ export function formatFirstReviewTime(activity: PullRequestReviewActivity) {
   }
 
   return formatDuration(activity.medianFirstReviewTimeDays)
+}
+
+export function formatFirstReviewSampleNote(
+  activity: PullRequestReviewActivity,
+) {
+  if (activity.status === 'unavailable') {
+    return 'Review sample unavailable'
+  }
+
+  if (activity.sampledPullRequestCount === 0) {
+    return 'No recent closed PRs were available'
+  }
+
+  if (activity.firstReviewSampleSize === 0) {
+    if (activity.reviewedPullRequestCount === 0) {
+      return `No outside reviews found in ${numberFormatter.format(
+        activity.sampledPullRequestCount,
+      )} recent closed PRs`
+    }
+
+    return `${numberFormatter.format(
+      activity.reviewedPullRequestCount,
+    )} of ${numberFormatter.format(
+      activity.sampledPullRequestCount,
+    )} recent closed PRs had outside reviews, but none had valid timing data`
+  }
+
+  const pullRequestLabel =
+    activity.firstReviewSampleSize === 1 ? 'PR' : 'PRs'
+
+  return `${numberFormatter.format(
+    activity.firstReviewSampleSize,
+  )} ${pullRequestLabel} with valid timing data`
 }
 
 export function formatReviewCoverage(activity: PullRequestReviewActivity) {
@@ -145,16 +119,32 @@ export function formatReviewCoverage(activity: PullRequestReviewActivity) {
   }
 
   const coverage = Math.round(
-    (activity.reviewedPullRequestCount / activity.sampledPullRequestCount) * 100,
+    (activity.reviewedPullRequestCount / activity.sampledPullRequestCount) *
+      100,
   )
+
+  return `${coverage}%`
+}
+
+export function formatReviewCoverageNote(
+  activity: PullRequestReviewActivity,
+) {
+  if (activity.status === 'unavailable') {
+    return 'Review sample unavailable'
+  }
+
+  if (activity.sampledPullRequestCount === 0) {
+    return 'No recent closed PRs were available'
+  }
+
   const pullRequestLabel =
     activity.sampledPullRequestCount === 1 ? 'PR' : 'PRs'
 
-  return `${coverage}% (${numberFormatter.format(
+  return `${numberFormatter.format(
     activity.reviewedPullRequestCount,
   )} of ${numberFormatter.format(
     activity.sampledPullRequestCount,
-  )} ${pullRequestLabel})`
+  )} recent closed ${pullRequestLabel} received an outside review`
 }
 
 function formatDuration(days: number) {

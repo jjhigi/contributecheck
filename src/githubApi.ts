@@ -36,16 +36,6 @@ type GitHubPullRequest = {
   } | null
 }
 
-type GitHubSearchResult = {
-  total_count?: number
-  items?: GitHubSearchItem[]
-}
-
-type GitHubSearchItem = {
-  created_at?: string
-  closed_at?: string | null
-}
-
 type GitHubPullRequestReview = {
   submitted_at?: string | null
   user?: {
@@ -101,16 +91,6 @@ export type PullRequestActivity =
     }
   | { status: 'unavailable' }
 
-export type PullRequestMergeActivity =
-  | {
-      status: 'available'
-      mergedCount: number
-      closedCount: number
-      medianMergeTimeDays: number | null
-      mergeTimeSampleSize: number
-    }
-  | { status: 'unavailable' }
-
 export type PullRequestReviewActivity =
   | {
       status: 'available'
@@ -162,8 +142,6 @@ const githubHeaders = {
   Accept: 'application/vnd.github+json',
 }
 
-const recentMergedWindowDays = 90
-const recentMergeSampleSize = 100
 const recentReviewPullRequestSampleSize = 10
 const dayMilliseconds = 24 * 60 * 60 * 1000
 
@@ -307,45 +285,6 @@ export async function fetchOpenPullRequests(
   }
 }
 
-/** Fetch pull requests merged and closed during the last 90 days. */
-export async function fetchPullRequestMergeActivity(
-  owner: string,
-  repository: string,
-): Promise<PullRequestMergeActivity> {
-  const cutoffDate = new Date(
-    Date.now() - recentMergedWindowDays * dayMilliseconds,
-  )
-    .toISOString()
-    .slice(0, 10)
-  const repositoryQuery = `repo:${owner}/${repository}`
-  const [mergedResult, closedResult] = await Promise.all([
-    fetchGitHubSearchResult(
-      `${repositoryQuery} is:pr is:merged merged:>=${cutoffDate}`,
-      recentMergeSampleSize,
-    ),
-    fetchGitHubSearchResult(
-      `${repositoryQuery} is:pr closed:>=${cutoffDate}`,
-      1,
-    ),
-  ])
-  const mergedCount = getGitHubSearchCount(mergedResult)
-  const closedCount = getGitHubSearchCount(closedResult)
-
-  if (mergedCount === null || closedCount === null) {
-    return { status: 'unavailable' }
-  }
-
-  const mergeTimeStats = getMergeTimeStats(mergedResult?.items ?? [])
-
-  return {
-    status: 'available',
-    mergedCount,
-    closedCount,
-    medianMergeTimeDays: mergeTimeStats.medianDays,
-    mergeTimeSampleSize: mergeTimeStats.sampleSize,
-  }
-}
-
 /** Fetch first-review timing for a bounded sample of recently updated pull requests. */
 export async function fetchPullRequestReviewActivity(
   owner: string,
@@ -394,28 +333,6 @@ export async function fetchPullRequestReviewActivity(
   }
 }
 
-async function fetchGitHubSearchResult(
-  query: string,
-  perPage: number,
-): Promise<GitHubSearchResult | null> {
-  try {
-    const response = await fetch(
-      `https://api.github.com/search/issues?q=${encodeURIComponent(query)}&per_page=${perPage}&sort=updated&order=desc`,
-      {
-        headers: githubHeaders,
-      },
-    )
-
-    if (!response.ok) {
-      return null
-    }
-
-    return (await response.json()) as GitHubSearchResult
-  } catch {
-    return null
-  }
-}
-
 async function fetchPullRequestReviews(
   owner: string,
   repository: string,
@@ -436,49 +353,6 @@ async function fetchPullRequestReviews(
     return (await response.json()) as GitHubPullRequestReview[]
   } catch {
     return null
-  }
-}
-
-function getGitHubSearchCount(searchResult: GitHubSearchResult | null) {
-  const totalCount = searchResult?.total_count
-
-  return typeof totalCount === 'number' && Number.isFinite(totalCount)
-    ? totalCount
-    : null
-}
-
-function getMergeTimeStats(items: GitHubSearchItem[]) {
-  const durations = items
-    .map((item) => {
-      const createdAt = Date.parse(item.created_at || '')
-      const closedAt = Date.parse(item.closed_at || '')
-
-      if (
-        !Number.isFinite(createdAt) ||
-        !Number.isFinite(closedAt) ||
-        closedAt < createdAt
-      ) {
-        return null
-      }
-
-      return closedAt - createdAt
-    })
-    .filter((duration): duration is number => duration !== null)
-    .sort((firstDuration, secondDuration) => firstDuration - secondDuration)
-
-  if (durations.length === 0) {
-    return { medianDays: null, sampleSize: 0 }
-  }
-
-  const middleIndex = Math.floor(durations.length / 2)
-  const medianDuration =
-    durations.length % 2 === 1
-      ? durations[middleIndex]
-      : (durations[middleIndex - 1] + durations[middleIndex]) / 2
-
-  return {
-    medianDays: Math.round(medianDuration / dayMilliseconds),
-    sampleSize: durations.length,
   }
 }
 
