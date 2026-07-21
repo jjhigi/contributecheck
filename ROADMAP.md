@@ -48,8 +48,9 @@ Status:
 
 - Repository activity summary: complete
 - Commit activity trends, initial 12-week version: complete
-- Broader repository health metrics: planned
-- Release history: planned
+- Issue backlog age / oldest open issue: deferred
+- Broader repository health metrics: deferred
+- Release history: deferred
 - Broader commit activity analysis: planned
 
 ## Phase 4: Contribution Workflow Analysis
@@ -97,7 +98,8 @@ repository's root or bounded workspace manifests, plus a 12-week commit
 activity trend. The
 pull request summary keeps merge and first-time contributor metrics deferred
 until they can provide a clearer signal with a more efficient analysis.
+Issue backlog age, broader repository health metrics, and release history are
+also deferred while the current cards remain focused.
 The next recommended work is deeper maintainer responsiveness analysis.
-Framework detection for monorepos and
-additional ecosystems remains planned, while release history is optional
-future work.
+Framework detection for additional ecosystems remains planned, while release
+history remains deferred.

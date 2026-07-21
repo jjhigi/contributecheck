@@ -298,6 +298,7 @@
 }
 
 .review-metrics-details {
+  row-gap: 24px;
   padding-top: 0;
   border-top: 0;
 }
@@ -321,12 +322,14 @@
   border-top: 1px solid var(--border);
 }
 
-.pull-request-activity .metric-explanation p {
+.pull-request-activity .metric-explanation ul {
+  margin: 0;
+  padding-left: 20px;
   color: var(--muted);
   font-size: 0.9rem;
 }
 
-.metric-explanation p + p {
+.metric-explanation li + li {
   margin-top: 8px;
 }
 
@@ -348,6 +351,23 @@
   color: var(--text-h);
   font-weight: 700;
   overflow-wrap: anywhere;
+}
+
+.community-health-list dt a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 3px;
+}
+
+.community-health-list dt a:hover {
+  color: var(--accent);
+}
+
+.community-health-list dt a:focus-visible {
+  border-radius: 4px;
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 3px;
 }
 
 .community-health-list dd {

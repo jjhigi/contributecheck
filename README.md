@@ -29,7 +29,7 @@ ContributeCheck is not meant to replace GitHub search. It is meant to make contr
   - open issue count
   - last updated date
   - repository link
-- Community health file indicators:
+- Community health file indicators with links to found files and directories:
   - `CONTRIBUTING.md`
   - Code of Conduct
   - issue templates
