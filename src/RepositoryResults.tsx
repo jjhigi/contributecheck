@@ -66,6 +66,31 @@ export function RepositoryResults({
             <dd>{formatFramework(frameworkDetection)}</dd>
           </div>
           <div>
+            <dt>License</dt>
+            <dd>
+              {repository.license ? (
+                repository.license.html_url ? (
+                  <a
+                    className="repository-detail-link"
+                    href={repository.license.html_url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {repository.license.name ||
+                      repository.license.spdx_id ||
+                      'View license'}
+                  </a>
+                ) : (
+                  repository.license.name ||
+                  repository.license.spdx_id ||
+                  'Specified'
+                )
+              ) : (
+                'Not specified'
+              )}
+            </dd>
+          </div>
+          <div>
             <dt>Stars</dt>
             <dd>{numberFormatter.format(repository.stargazers_count)}</dd>
           </div>
@@ -80,6 +105,16 @@ export function RepositoryResults({
           <div>
             <dt>Last updated</dt>
             <dd>{formatDate(repository.updated_at)}</dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd
+              className={
+                repository.archived ? 'repository-status archived' : ''
+              }
+            >
+              {repository.archived ? 'Archived' : 'Active'}
+            </dd>
           </div>
         </dl>
       </section>

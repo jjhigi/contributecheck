@@ -12,6 +12,14 @@ export type GitHubRepository = {
   open_issues_count: number
   updated_at: string
   html_url: string
+  archived: boolean
+  license: GitHubLicense | null
+}
+
+type GitHubLicense = {
+  name?: string | null
+  spdx_id?: string | null
+  html_url?: string | null
 }
 
 type GitHubCommunityProfile = {

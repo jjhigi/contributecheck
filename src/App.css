@@ -211,6 +211,27 @@
   overflow-wrap: anywhere;
 }
 
+.repository-detail-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 3px;
+}
+
+.repository-detail-link:hover {
+  color: var(--accent);
+}
+
+.repository-detail-link:focus-visible {
+  border-radius: 4px;
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 3px;
+}
+
+.repository-status.archived {
+  color: var(--danger);
+}
+
 .community-health h3,
 .good-first-issues h3,
 .pull-request-activity h3,
