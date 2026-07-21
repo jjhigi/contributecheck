@@ -39,9 +39,10 @@ export type PullRequestReviewActivity =
       firstReviewSampleSize: number
       reviewedPullRequestCount: number
       sampledPullRequestCount: number
-      medianAffiliatedReviewTimeDays: number | null
-      affiliatedReviewSampleSize: number
-      affiliatedReviewCount: number
+      medianProjectMemberReviewTimeDays: number | null
+      projectMemberReviewSampleSize: number
+      projectMemberReviewCount: number
+      projectMemberReviewerCount: number
     }
   | { status: 'unavailable' }
 
@@ -64,7 +65,7 @@ export type CommitActivity =
 
 const recentReviewPullRequestSampleSize = 10
 const dayMilliseconds = 24 * 60 * 60 * 1000
-const repositoryAffiliatedAssociations = new Set([
+const projectMemberAssociations = new Set([
   'OWNER',
   'MEMBER',
   'COLLABORATOR',
@@ -100,8 +101,7 @@ export async function fetchOpenPullRequests(
 }
 
 /**
- * Fetch review timing and outside-review coverage for a bounded sample of
- * recently updated pull requests.
+ * Fetch review metrics for a bounded sample of recently updated pull requests.
  */
 export async function fetchPullRequestReviewActivity(
   owner: string,
@@ -136,10 +136,15 @@ export async function fetchPullRequestReviewActivity(
       pullRequests,
       successfulReviewResults,
     )
-    const affiliatedReviewStats = getReviewStats(
+    const projectMemberReviewStats = getReviewStats(
       pullRequests,
       successfulReviewResults,
-      isRepositoryAffiliatedReview,
+      isProjectMemberReview,
+    )
+    const projectMemberReviewerCount = getDistinctReviewerCount(
+      pullRequests,
+      successfulReviewResults,
+      isProjectMemberReview,
     )
 
     return {
@@ -148,9 +153,12 @@ export async function fetchPullRequestReviewActivity(
       firstReviewSampleSize: outsideReviewStats.sampleSize,
       reviewedPullRequestCount: outsideReviewStats.reviewedPullRequestCount,
       sampledPullRequestCount: pullRequests.length,
-      medianAffiliatedReviewTimeDays: affiliatedReviewStats.medianDays,
-      affiliatedReviewSampleSize: affiliatedReviewStats.sampleSize,
-      affiliatedReviewCount: affiliatedReviewStats.reviewedPullRequestCount,
+      medianProjectMemberReviewTimeDays:
+        projectMemberReviewStats.medianDays,
+      projectMemberReviewSampleSize: projectMemberReviewStats.sampleSize,
+      projectMemberReviewCount:
+        projectMemberReviewStats.reviewedPullRequestCount,
+      projectMemberReviewerCount,
     }
   } catch {
     return { status: 'unavailable' }
@@ -271,8 +279,37 @@ function getReviewedPullRequestCount(
   }, 0)
 }
 
-function isRepositoryAffiliatedReview(review: GitHubPullRequestReview) {
-  return repositoryAffiliatedAssociations.has(
+function getDistinctReviewerCount(
+  pullRequests: GitHubPullRequest[],
+  reviewResults: GitHubPullRequestReview[][],
+  qualifiesReview: (review: GitHubPullRequestReview) => boolean,
+) {
+  const reviewerLogins = new Set<string>()
+
+  pullRequests.forEach((pullRequest, index) => {
+    const authorLogin = pullRequest.user?.login?.toLowerCase()
+
+    reviewResults[index].forEach((review) => {
+      const reviewerLogin = review.user?.login?.toLowerCase()
+      const submittedAt = Date.parse(review.submitted_at || '')
+
+      if (
+        authorLogin &&
+        reviewerLogin &&
+        reviewerLogin !== authorLogin &&
+        qualifiesReview(review) &&
+        Number.isFinite(submittedAt)
+      ) {
+        reviewerLogins.add(reviewerLogin)
+      }
+    })
+  })
+
+  return reviewerLogins.size
+}
+
+function isProjectMemberReview(review: GitHubPullRequestReview) {
+  return projectMemberAssociations.has(
     review.author_association?.toUpperCase() || '',
   )
 }

@@ -5,13 +5,14 @@ import {
   type PullRequestReviewActivity,
 } from '../github/activityApi'
 import {
-  formatAffiliatedReviewCoverage,
-  formatAffiliatedReviewCoverageNote,
-  formatAffiliatedReviewSampleNote,
-  formatAffiliatedReviewTime,
   formatAge,
   formatFirstReviewSampleNote,
   formatFirstReviewTime,
+  formatProjectMemberReviewCoverage,
+  formatProjectMemberReviewCoverageNote,
+  formatProjectMemberReviewSampleNote,
+  formatProjectMemberReviewTime,
+  formatProjectMemberReviewerNote,
   formatReviewCoverage,
   formatReviewCoverageNote,
   numberFormatter,
@@ -79,8 +80,7 @@ export function PullRequestActivitySection({
         <h3 id="pull-request-activity">Pull request summary</h3>
         <p>
           Open pull requests show current contribution activity. Review
-          metrics provide additional context about how quickly outside
-          contributions receive attention.
+          metrics show how quickly pull requests receive attention.
         </p>
       </div>
 
@@ -140,7 +140,7 @@ export function PullRequestActivitySection({
             reviewMetricsState.activity.status === 'available' && (
               <dl className="repository-details review-metrics-details">
                 <div>
-                  <dt>Median time to first outside review</dt>
+                  <dt>Median time to first review</dt>
                   <dd>
                     <span className="metric-value">
                       {formatFirstReviewTime(reviewMetricsState.activity)}
@@ -153,7 +153,7 @@ export function PullRequestActivitySection({
                   </dd>
                 </div>
                 <div>
-                  <dt>Outside review coverage</dt>
+                  <dt>PRs receiving a review</dt>
                   <dd>
                     <span className="metric-value">
                       {formatReviewCoverage(reviewMetricsState.activity)}
@@ -164,30 +164,45 @@ export function PullRequestActivitySection({
                   </dd>
                 </div>
                 <div>
-                  <dt>Median time to first repository-affiliated review</dt>
+                  <dt>Median time to first project-member review</dt>
                   <dd>
                     <span className="metric-value">
-                      {formatAffiliatedReviewTime(
+                      {formatProjectMemberReviewTime(
                         reviewMetricsState.activity,
                       )}
                     </span>
                     <span className="metric-note">
-                      {formatAffiliatedReviewSampleNote(
+                      {formatProjectMemberReviewSampleNote(
                         reviewMetricsState.activity,
                       )}
                     </span>
                   </dd>
                 </div>
                 <div>
-                  <dt>Repository-affiliated review coverage</dt>
+                  <dt>PRs receiving a project-member review</dt>
                   <dd>
                     <span className="metric-value">
-                      {formatAffiliatedReviewCoverage(
+                      {formatProjectMemberReviewCoverage(
                         reviewMetricsState.activity,
                       )}
                     </span>
                     <span className="metric-note">
-                      {formatAffiliatedReviewCoverageNote(
+                      {formatProjectMemberReviewCoverageNote(
+                        reviewMetricsState.activity,
+                      )}
+                    </span>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Different project-member reviewers</dt>
+                  <dd>
+                    <span className="metric-value">
+                      {numberFormatter.format(
+                        reviewMetricsState.activity.projectMemberReviewerCount,
+                      )}
+                    </span>
+                    <span className="metric-note">
+                      {formatProjectMemberReviewerNote(
                         reviewMetricsState.activity,
                       )}
                     </span>
@@ -217,9 +232,14 @@ export function PullRequestActivitySection({
                 than the author is used to measure review timing.
               </p>
               <p>
-                Median timing uses only PRs with valid timing data. Coverage
-                is the percentage of sampled PRs with a qualifying outside
-                review.
+                Project-member reviews are from GitHub users identified as
+                repository owners, members, or collaborators. Median timing
+                uses only PRs with valid timing data, while coverage shows the
+                percentage of sampled PRs that received the relevant review.
+              </p>
+              <p>
+                This count includes each project member once, even if they
+                reviewed more than one sampled PR.
               </p>
             </div>
           )}

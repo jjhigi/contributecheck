@@ -88,8 +88,9 @@ Status:
 
 The current implementation provides repository details, community health file
 signals, good first issue detection, and an initial pull request health
-summary with open pull request activity. Review timing, outside-review
-coverage, and repository-affiliated review coverage are available on demand
+summary with open pull request activity. Review timing, review coverage,
+project-member review coverage, and the number of different project-member
+reviewers are available on demand
 for a bounded sample, with an in-card calculation explanation. It also
 provides framework signals from supported dependencies and package names in a
 repository's root or bounded workspace manifests, plus a 12-week commit
