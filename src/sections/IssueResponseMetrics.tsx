@@ -66,7 +66,7 @@ export function IssueResponseMetrics({
       {isExpanded && (
         <div className="review-metrics-panel" id="issue-response-metrics">
           <p className="review-metrics-scope">
-            Based on up to 10 recently updated closed issues.
+            Sample: up to 10 recently updated closed issues.
           </p>
 
           {state.status === 'loading' && (
@@ -78,8 +78,8 @@ export function IssueResponseMetrics({
           {state.status === 'loaded' &&
             state.activity.status === 'unavailable' && (
               <p className="error-message">
-                Issue response metrics are unavailable right now. Try again in
-                a moment.
+                Issue response request unavailable. GitHub could not provide
+                this sample right now. Try again in a moment.
               </p>
             )}
 
@@ -124,7 +124,7 @@ export function IssueResponseMetrics({
           {isCalculationExpanded && (
             <div className="metric-explanation" id="issue-response-explanation">
               <ul>
-                <li>Uses up to 10 recently updated closed issues.</li>
+                <li>Sample: up to 10 recently updated closed issues.</li>
                 <li>
                   A project-member response is the first comment from a
                   repository owner, member, or collaborator other than the
@@ -133,6 +133,11 @@ export function IssueResponseMetrics({
                 <li>
                   Median timing uses only issues with valid issue and response
                   timestamps.
+                </li>
+                <li>
+                  A 0% result means the sample loaded but no sampled issues
+                  received a project-member response; an unavailable request
+                  is shown separately above.
                 </li>
               </ul>
             </div>

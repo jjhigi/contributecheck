@@ -65,6 +65,8 @@ export function formatFirstReviewTime(activity: PullRequestReviewActivity) {
     activity.status === 'available'
       ? activity.medianFirstReviewTimeDays
       : null,
+    activity.status === 'available' ? activity.reviewedPullRequestCount : 0,
+    'No qualifying review',
   )
 }
 
@@ -79,6 +81,10 @@ export function formatProjectMemberReviewTime(
     activity.status === 'available'
       ? activity.medianProjectMemberReviewTimeDays
       : null,
+    activity.status === 'available'
+      ? activity.projectMemberReviewCount
+      : 0,
+    'No qualifying project-member review',
   )
 }
 
@@ -86,21 +92,27 @@ function formatReviewTime(
   activity: PullRequestReviewActivity,
   sampleSize: number,
   medianDays: number | null,
+  reviewedCount: number,
+  noResponseLabel: string,
 ) {
   if (activity.status === 'unavailable') {
-    return 'Unavailable'
+    return 'Request unavailable'
   }
 
   if (activity.sampledPullRequestCount === 0) {
-    return 'No recent closed PRs'
+    return 'No recent closed pull requests'
   }
 
   if (sampleSize === 0) {
+    if (reviewedCount === 0) {
+      return noResponseLabel
+    }
+
     return 'No valid timing data'
   }
 
   if (medianDays === null) {
-    return 'Unavailable'
+    return 'No valid timing data'
   }
 
   return formatDuration(medianDays)
@@ -110,7 +122,7 @@ export function formatFirstReviewSampleNote(
   activity: PullRequestReviewActivity,
 ) {
   if (activity.status === 'unavailable') {
-    return 'Review sample unavailable'
+    return 'Review request unavailable'
   }
 
   return formatReviewSampleNote(
@@ -125,7 +137,7 @@ export function formatProjectMemberReviewSampleNote(
   activity: PullRequestReviewActivity,
 ) {
   if (activity.status === 'unavailable') {
-    return 'Review sample unavailable'
+    return 'Review request unavailable'
   }
 
   return formatReviewSampleNote(
@@ -143,28 +155,28 @@ function formatReviewSampleNote(
   reviewDescription: string,
 ) {
   if (activity.sampledPullRequestCount === 0) {
-    return 'No recent closed PRs were available'
+    return 'No recent closed pull requests were available'
   }
 
   if (sampleSize === 0) {
     if (reviewedCount === 0) {
       return `No ${reviewDescription} found in ${numberFormatter.format(
         activity.sampledPullRequestCount,
-      )} recent closed PRs`
+      )} recent closed pull requests`
     }
 
     return `${numberFormatter.format(
       reviewedCount,
     )} of ${numberFormatter.format(
       activity.sampledPullRequestCount,
-    )} recent closed PRs received ${reviewDescription}, but none had valid timing data`
+    )} recent closed pull requests received ${reviewDescription}, but none had valid timing data`
   }
-
-  const pullRequestLabel = sampleSize === 1 ? 'PR' : 'PRs'
 
   return `${numberFormatter.format(
     sampleSize,
-  )} ${pullRequestLabel} with valid timing data`
+  )} of ${numberFormatter.format(
+    activity.sampledPullRequestCount,
+  )} recent closed pull requests had valid timing data`
 }
 
 export function formatReviewCoverage(activity: PullRequestReviewActivity) {
@@ -190,11 +202,11 @@ function formatCoverage(
   reviewedCount: number,
 ) {
   if (activity.status === 'unavailable') {
-    return 'Unavailable'
+    return 'Request unavailable'
   }
 
   if (activity.sampledPullRequestCount === 0) {
-    return 'No recent closed PRs'
+    return 'No recent closed pull requests'
   }
 
   const coverage = Math.round(
@@ -231,24 +243,21 @@ export function formatProjectMemberReviewerNote(
   activity: PullRequestReviewActivity,
 ) {
   if (activity.status === 'unavailable') {
-    return 'Review sample unavailable'
+    return 'Review request unavailable'
   }
 
   if (activity.sampledPullRequestCount === 0) {
-    return 'No recent closed PRs were available'
+    return 'No recent closed pull requests were available'
   }
-
-  const pullRequestLabel =
-    activity.sampledPullRequestCount === 1 ? 'PR' : 'PRs'
 
   return `Each reviewer counted once across ${numberFormatter.format(
     activity.sampledPullRequestCount,
-  )} recent closed ${pullRequestLabel}`
+  )} recent closed pull requests`
 }
 
 export function formatIssueResponseTime(activity: IssueResponseActivity) {
   if (activity.status === 'unavailable') {
-    return 'Unavailable'
+    return 'Request unavailable'
   }
 
   if (activity.sampledIssueCount === 0) {
@@ -256,11 +265,15 @@ export function formatIssueResponseTime(activity: IssueResponseActivity) {
   }
 
   if (activity.responseTimingSampleSize === 0) {
+    if (activity.projectMemberResponseCount === 0) {
+      return 'No project-member response'
+    }
+
     return 'No valid timing data'
   }
 
   if (activity.medianProjectMemberResponseTimeDays === null) {
-    return 'Unavailable'
+    return 'No valid timing data'
   }
 
   return formatDuration(activity.medianProjectMemberResponseTimeDays)
@@ -268,7 +281,7 @@ export function formatIssueResponseTime(activity: IssueResponseActivity) {
 
 export function formatIssueResponseSampleNote(activity: IssueResponseActivity) {
   if (activity.status === 'unavailable') {
-    return 'Issue response sample unavailable'
+    return 'Issue response request unavailable'
   }
 
   if (activity.sampledIssueCount === 0) {
@@ -289,17 +302,16 @@ export function formatIssueResponseSampleNote(activity: IssueResponseActivity) {
     )} recent closed issues received a project-member response, but none had valid timing data`
   }
 
-  const issueLabel =
-    activity.responseTimingSampleSize === 1 ? 'issue' : 'issues'
-
   return `${numberFormatter.format(
     activity.responseTimingSampleSize,
-  )} ${issueLabel} with valid timing data`
+  )} of ${numberFormatter.format(
+    activity.sampledIssueCount,
+  )} recent closed issues had valid timing data`
 }
 
 export function formatIssueResponseCoverage(activity: IssueResponseActivity) {
   if (activity.status === 'unavailable') {
-    return 'Unavailable'
+    return 'Request unavailable'
   }
 
   if (activity.sampledIssueCount === 0) {
@@ -317,7 +329,7 @@ export function formatIssueResponseCoverageNote(
   activity: IssueResponseActivity,
 ) {
   if (activity.status === 'unavailable') {
-    return 'Issue response sample unavailable'
+    return 'Issue response request unavailable'
   }
 
   if (activity.sampledIssueCount === 0) {
@@ -337,21 +349,18 @@ function formatCoverageNote(
   reviewLabel: string,
 ) {
   if (activity.status === 'unavailable') {
-    return 'Review sample unavailable'
+    return 'Review request unavailable'
   }
 
   if (activity.sampledPullRequestCount === 0) {
-    return 'No recent closed PRs were available'
+    return 'No recent closed pull requests were available'
   }
-
-  const pullRequestLabel =
-    activity.sampledPullRequestCount === 1 ? 'PR' : 'PRs'
 
   return `${numberFormatter.format(
     reviewedCount,
   )} of ${numberFormatter.format(
     activity.sampledPullRequestCount,
-  )} recent closed ${pullRequestLabel} received ${reviewLabel}`
+  )} recent closed pull requests received ${reviewLabel}`
 }
 
 function formatDuration(days: number) {
