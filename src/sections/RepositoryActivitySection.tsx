@@ -4,12 +4,17 @@ import type {
   RepositoryActivity,
 } from '../github/activityApi'
 import { formatDate, numberFormatter } from '../formatters'
+import { IssueResponseMetrics } from './IssueResponseMetrics'
 
 export function RepositoryActivitySection({
+  owner,
+  repositoryName,
   repositoryUrl,
   repositoryActivity,
   commitActivity,
 }: {
+  owner: string
+  repositoryName: string
   repositoryUrl: string
   repositoryActivity: RepositoryActivity
   commitActivity: CommitActivity
@@ -91,6 +96,8 @@ export function RepositoryActivitySection({
           </a>
         </>
       )}
+
+      <IssueResponseMetrics owner={owner} repositoryName={repositoryName} />
     </section>
   )
 }

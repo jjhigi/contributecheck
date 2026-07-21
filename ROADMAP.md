@@ -68,7 +68,8 @@ Status:
 
 - Pull request activity summary: complete
 - Pull request merge and resolution metrics: deferred
-- Maintainer responsiveness, on-demand review timing and affiliation coverage: complete
+- Maintainer responsiveness, on-demand review timing, affiliation coverage,
+  and issue response metrics: complete
 - Deeper pull request analysis: planned
 - Broader maintainer responsiveness analysis: planned
 - First-time contributor metrics: planned
@@ -91,10 +92,11 @@ The current implementation provides repository details, community health file
 signals, good first issue detection, and an initial pull request health
 summary with open pull request activity. Review timing, review coverage,
 project-member review coverage, and the number of different project-member
-reviewers are available on demand
-for a bounded sample, with an in-card calculation explanation. It also
-provides framework signals from supported dependencies and package names in a
-repository's root or bounded workspace manifests, plus a 12-week commit
+reviewers are available on demand for a bounded sample, with an in-card
+calculation explanation. Repository Activity also provides on-demand issue
+response coverage and timing for a bounded sample of recent closed issues. It
+also provides framework signals from supported dependencies and package names
+in a repository's root or bounded workspace manifests, plus a 12-week commit
 activity trend. The
 pull request summary keeps merge and first-time contributor metrics deferred
 until they can provide a clearer signal with a more efficient analysis.
