@@ -67,14 +67,16 @@ export function formatFirstReviewTime(activity: PullRequestReviewActivity) {
   )
 }
 
-export function formatAffiliatedReviewTime(
+export function formatProjectMemberReviewTime(
   activity: PullRequestReviewActivity,
 ) {
   return formatReviewTime(
     activity,
-    activity.status === 'available' ? activity.affiliatedReviewSampleSize : 0,
     activity.status === 'available'
-      ? activity.medianAffiliatedReviewTimeDays
+      ? activity.projectMemberReviewSampleSize
+      : 0,
+    activity.status === 'available'
+      ? activity.medianProjectMemberReviewTimeDays
       : null,
   )
 }
@@ -114,11 +116,11 @@ export function formatFirstReviewSampleNote(
     activity,
     activity.reviewedPullRequestCount,
     activity.firstReviewSampleSize,
-    'outside',
+    'reviews from someone other than the author',
   )
 }
 
-export function formatAffiliatedReviewSampleNote(
+export function formatProjectMemberReviewSampleNote(
   activity: PullRequestReviewActivity,
 ) {
   if (activity.status === 'unavailable') {
@@ -127,9 +129,9 @@ export function formatAffiliatedReviewSampleNote(
 
   return formatReviewSampleNote(
     activity,
-    activity.affiliatedReviewCount,
-    activity.affiliatedReviewSampleSize,
-    'repository-affiliated',
+    activity.projectMemberReviewCount,
+    activity.projectMemberReviewSampleSize,
+    'project-member reviews',
   )
 }
 
@@ -137,7 +139,7 @@ function formatReviewSampleNote(
   activity: Extract<PullRequestReviewActivity, { status: 'available' }>,
   reviewedCount: number,
   sampleSize: number,
-  reviewType: string,
+  reviewDescription: string,
 ) {
   if (activity.sampledPullRequestCount === 0) {
     return 'No recent closed PRs were available'
@@ -145,7 +147,7 @@ function formatReviewSampleNote(
 
   if (sampleSize === 0) {
     if (reviewedCount === 0) {
-      return `No ${reviewType} reviews found in ${numberFormatter.format(
+      return `No ${reviewDescription} found in ${numberFormatter.format(
         activity.sampledPullRequestCount,
       )} recent closed PRs`
     }
@@ -154,7 +156,7 @@ function formatReviewSampleNote(
       reviewedCount,
     )} of ${numberFormatter.format(
       activity.sampledPullRequestCount,
-    )} recent closed PRs had ${reviewType} reviews, but none had valid timing data`
+    )} recent closed PRs received ${reviewDescription}, but none had valid timing data`
   }
 
   const pullRequestLabel = sampleSize === 1 ? 'PR' : 'PRs'
@@ -171,12 +173,14 @@ export function formatReviewCoverage(activity: PullRequestReviewActivity) {
   )
 }
 
-export function formatAffiliatedReviewCoverage(
+export function formatProjectMemberReviewCoverage(
   activity: PullRequestReviewActivity,
 ) {
   return formatCoverage(
     activity,
-    activity.status === 'available' ? activity.affiliatedReviewCount : 0,
+    activity.status === 'available'
+      ? activity.projectMemberReviewCount
+      : 0,
   )
 }
 
@@ -206,18 +210,39 @@ export function formatReviewCoverageNote(
   return formatCoverageNote(
     activity,
     activity.status === 'available' ? activity.reviewedPullRequestCount : 0,
-    'an outside review',
+    'a review from someone other than the author',
   )
 }
 
-export function formatAffiliatedReviewCoverageNote(
+export function formatProjectMemberReviewCoverageNote(
   activity: PullRequestReviewActivity,
 ) {
   return formatCoverageNote(
     activity,
-    activity.status === 'available' ? activity.affiliatedReviewCount : 0,
-    'a repository-affiliated review',
+    activity.status === 'available'
+      ? activity.projectMemberReviewCount
+      : 0,
+    'a project-member review',
   )
+}
+
+export function formatProjectMemberReviewerNote(
+  activity: PullRequestReviewActivity,
+) {
+  if (activity.status === 'unavailable') {
+    return 'Review sample unavailable'
+  }
+
+  if (activity.sampledPullRequestCount === 0) {
+    return 'No recent closed PRs were available'
+  }
+
+  const pullRequestLabel =
+    activity.sampledPullRequestCount === 1 ? 'PR' : 'PRs'
+
+  return `Each reviewer counted once across ${numberFormatter.format(
+    activity.sampledPullRequestCount,
+  )} recent closed ${pullRequestLabel}`
 }
 
 function formatCoverageNote(
