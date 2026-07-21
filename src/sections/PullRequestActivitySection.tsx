@@ -119,7 +119,7 @@ export function PullRequestActivitySection({
       {isReviewMetricsExpanded && (
         <div className="review-metrics-panel" id="review-metrics">
           <p className="review-metrics-scope">
-            Based on up to 10 recently updated closed pull requests.
+            Sample: up to 10 recently updated closed pull requests.
           </p>
 
           {reviewMetricsState.status === 'loading' && (
@@ -131,8 +131,8 @@ export function PullRequestActivitySection({
           {reviewMetricsState.status === 'loaded' &&
             reviewMetricsState.activity.status === 'unavailable' && (
               <p className="error-message">
-                Review metrics are unavailable right now. Try again in a
-                moment.
+                Review metrics request unavailable. GitHub could not provide
+                this sample right now. Try again in a moment.
               </p>
             )}
 
@@ -153,7 +153,7 @@ export function PullRequestActivitySection({
                   </dd>
                 </div>
                 <div>
-                  <dt>PRs receiving a review</dt>
+                  <dt>Pull requests receiving a review</dt>
                   <dd>
                     <span className="metric-value">
                       {formatReviewCoverage(reviewMetricsState.activity)}
@@ -179,7 +179,7 @@ export function PullRequestActivitySection({
                   </dd>
                 </div>
                 <div>
-                  <dt>PRs receiving a project-member review</dt>
+                  <dt>Pull requests receiving a project-member review</dt>
                   <dd>
                     <span className="metric-value">
                       {formatProjectMemberReviewCoverage(
@@ -228,20 +228,26 @@ export function PullRequestActivitySection({
             >
               <ul>
                 <li>
-                  Uses up to 10 recently updated closed pull requests.
+                  Sample: up to 10 recently updated closed pull requests.
                 </li>
                 <li>
-                  For each PR, the first submitted review from someone other
-                  than the author is used to measure review timing.
+                  For each pull request, the first submitted review from
+                  someone other than the author is used to measure review
+                  timing.
                 </li>
                 <li>
                   Project-member reviews are from GitHub users identified as
                   repository owners, members, or collaborators.
                 </li>
                 <li>
-                  Median timing uses only PRs with valid timing data, while
-                  coverage shows the percentage of sampled PRs that received
-                  the relevant review.
+                  Median timing uses only pull requests with valid timing
+                  data, while coverage shows the percentage of sampled pull
+                  requests that received the relevant review.
+                </li>
+                <li>
+                  A 0% coverage result means the sample loaded but no sampled
+                  pull requests received the relevant review; an unavailable
+                  request is shown separately above.
                 </li>
                 <li>
                   Each project member is counted once, even if they reviewed
