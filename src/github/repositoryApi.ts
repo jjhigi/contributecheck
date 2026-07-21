@@ -16,11 +16,16 @@ export type GitHubRepository = {
 
 type GitHubCommunityProfile = {
   files?: {
-    code_of_conduct?: unknown
-    contributing?: unknown
-    issue_template?: unknown
-    pull_request_template?: unknown
+    code_of_conduct?: GitHubCommunityFile | null
+    code_of_conduct_file?: GitHubCommunityFile | null
+    contributing?: GitHubCommunityFile | null
+    issue_template?: GitHubCommunityFile | null
+    pull_request_template?: GitHubCommunityFile | null
   }
+}
+
+type GitHubCommunityFile = {
+  html_url?: string | null
 }
 
 type GitHubIssue = {
@@ -30,11 +35,16 @@ type GitHubIssue = {
   pull_request?: unknown
 }
 
+export type CommunityHealthFile = {
+  found: boolean
+  htmlUrl: string | null
+}
+
 export type CommunityHealthFileStates = {
-  codeOfConduct: boolean
-  contributing: boolean
-  issueTemplates: boolean
-  pullRequestTemplate: boolean
+  codeOfConduct: CommunityHealthFile
+  contributing: CommunityHealthFile
+  issueTemplates: CommunityHealthFile
+  pullRequestTemplate: CommunityHealthFile
 }
 
 export type CommunityHealth =
@@ -111,20 +121,35 @@ export async function fetchCommunityHealth(
     }
 
     const communityProfile = (await response.json()) as GitHubCommunityProfile
+    const files = communityProfile.files
+    const codeOfConductFile = files?.code_of_conduct_file
+    const codeOfConduct = files?.code_of_conduct
 
     return {
       status: 'available',
       files: {
-        codeOfConduct: Boolean(communityProfile.files?.code_of_conduct),
-        contributing: Boolean(communityProfile.files?.contributing),
-        issueTemplates: Boolean(communityProfile.files?.issue_template),
-        pullRequestTemplate: Boolean(
-          communityProfile.files?.pull_request_template,
+        codeOfConduct: {
+          found: Boolean(codeOfConduct || codeOfConductFile),
+          htmlUrl: codeOfConductFile?.html_url || null,
+        },
+        contributing: getCommunityFileState(files?.contributing),
+        issueTemplates: getCommunityFileState(files?.issue_template),
+        pullRequestTemplate: getCommunityFileState(
+          files?.pull_request_template,
         ),
       },
     }
   } catch {
     return { status: 'unavailable' }
+  }
+}
+
+function getCommunityFileState(
+  file: GitHubCommunityFile | null | undefined,
+): CommunityHealthFile {
+  return {
+    found: Boolean(file),
+    htmlUrl: file?.html_url || null,
   }
 }
 

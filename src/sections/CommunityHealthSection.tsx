@@ -1,4 +1,7 @@
-import type { CommunityHealth } from '../github/repositoryApi'
+import type {
+  CommunityHealth,
+  CommunityHealthFile,
+} from '../github/repositoryApi'
 
 export function CommunityHealthSection({
   communityHealth,
@@ -27,19 +30,19 @@ export function CommunityHealthSection({
         <dl className="community-health-list">
           <CommunityHealthFileStatus
             label="CONTRIBUTING.md"
-            isFound={communityHealth.files.contributing}
+            file={communityHealth.files.contributing}
           />
           <CommunityHealthFileStatus
             label="Code of Conduct"
-            isFound={communityHealth.files.codeOfConduct}
+            file={communityHealth.files.codeOfConduct}
           />
           <CommunityHealthFileStatus
             label="Issue templates"
-            isFound={communityHealth.files.issueTemplates}
+            file={communityHealth.files.issueTemplates}
           />
           <CommunityHealthFileStatus
             label="Pull request template"
-            isFound={communityHealth.files.pullRequestTemplate}
+            file={communityHealth.files.pullRequestTemplate}
           />
         </dl>
       )}
@@ -49,16 +52,26 @@ export function CommunityHealthSection({
 
 function CommunityHealthFileStatus({
   label,
-  isFound,
+  file,
 }: {
   label: string
-  isFound: boolean
+  file: CommunityHealthFile
 }) {
   return (
     <div>
-      <dt>{label}</dt>
-      <dd className={isFound ? 'health-status found' : 'health-status missing'}>
-        {isFound ? 'Found' : 'Missing'}
+      <dt>
+        {file.htmlUrl ? (
+          <a href={file.htmlUrl} target="_blank" rel="noreferrer">
+            {label}
+          </a>
+        ) : (
+          label
+        )}
+      </dt>
+      <dd
+        className={file.found ? 'health-status found' : 'health-status missing'}
+      >
+        {file.found ? 'Found' : 'Missing'}
       </dd>
     </div>
   )

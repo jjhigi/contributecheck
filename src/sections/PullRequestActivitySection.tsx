@@ -226,21 +226,28 @@ export function PullRequestActivitySection({
               className="metric-explanation"
               id="review-metrics-explanation"
             >
-              <p>Uses up to 10 recently updated closed pull requests.</p>
-              <p>
-                For each PR, the first submitted review from someone other
-                than the author is used to measure review timing.
-              </p>
-              <p>
-                Project-member reviews are from GitHub users identified as
-                repository owners, members, or collaborators. Median timing
-                uses only PRs with valid timing data, while coverage shows the
-                percentage of sampled PRs that received the relevant review.
-              </p>
-              <p>
-                This count includes each project member once, even if they
-                reviewed more than one sampled PR.
-              </p>
+              <ul>
+                <li>
+                  Uses up to 10 recently updated closed pull requests.
+                </li>
+                <li>
+                  For each PR, the first submitted review from someone other
+                  than the author is used to measure review timing.
+                </li>
+                <li>
+                  Project-member reviews are from GitHub users identified as
+                  repository owners, members, or collaborators.
+                </li>
+                <li>
+                  Median timing uses only PRs with valid timing data, while
+                  coverage shows the percentage of sampled PRs that received
+                  the relevant review.
+                </li>
+                <li>
+                  Each project member is counted once, even if they reviewed
+                  more than one sampled PR.
+                </li>
+              </ul>
             </div>
           )}
         </div>
