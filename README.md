@@ -57,6 +57,8 @@ ContributeCheck is not meant to replace GitHub search. It is meant to make contr
   - shows the latest commit date
   - shows the total commits from the last 4 weeks
   - shows a 12-week commit activity chart
+  - lets users request issue response coverage and median time to a project-member response
+  - explains how the issue response metrics are calculated
   - links to the full commit history on GitHub
 
 ## Tech Stack

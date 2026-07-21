@@ -124,6 +124,9 @@ export function RepositoryResults({
       <GoodFirstIssuesSection goodFirstIssues={goodFirstIssues} />
 
       <RepositoryActivitySection
+        key={`${repository.owner.login}/${repository.name}`}
+        owner={repository.owner.login}
+        repositoryName={repository.name}
         repositoryUrl={repository.html_url}
         repositoryActivity={repositoryActivity}
         commitActivity={commitActivity}

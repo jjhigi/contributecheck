@@ -1,5 +1,6 @@
 import type { FrameworkDetection } from './github/frameworkDetection'
 import type { PullRequestReviewActivity } from './github/activityApi'
+import type { IssueResponseActivity } from './github/issueActivityApi'
 
 export const numberFormatter = new Intl.NumberFormat('en-US')
 
@@ -243,6 +244,91 @@ export function formatProjectMemberReviewerNote(
   return `Each reviewer counted once across ${numberFormatter.format(
     activity.sampledPullRequestCount,
   )} recent closed ${pullRequestLabel}`
+}
+
+export function formatIssueResponseTime(activity: IssueResponseActivity) {
+  if (activity.status === 'unavailable') {
+    return 'Unavailable'
+  }
+
+  if (activity.sampledIssueCount === 0) {
+    return 'No recent closed issues'
+  }
+
+  if (activity.responseTimingSampleSize === 0) {
+    return 'No valid timing data'
+  }
+
+  if (activity.medianProjectMemberResponseTimeDays === null) {
+    return 'Unavailable'
+  }
+
+  return formatDuration(activity.medianProjectMemberResponseTimeDays)
+}
+
+export function formatIssueResponseSampleNote(activity: IssueResponseActivity) {
+  if (activity.status === 'unavailable') {
+    return 'Issue response sample unavailable'
+  }
+
+  if (activity.sampledIssueCount === 0) {
+    return 'No recent closed issues were available'
+  }
+
+  if (activity.responseTimingSampleSize === 0) {
+    if (activity.projectMemberResponseCount === 0) {
+      return `No project-member responses found in ${numberFormatter.format(
+        activity.sampledIssueCount,
+      )} recent closed issues`
+    }
+
+    return `${numberFormatter.format(
+      activity.projectMemberResponseCount,
+    )} of ${numberFormatter.format(
+      activity.sampledIssueCount,
+    )} recent closed issues received a project-member response, but none had valid timing data`
+  }
+
+  const issueLabel =
+    activity.responseTimingSampleSize === 1 ? 'issue' : 'issues'
+
+  return `${numberFormatter.format(
+    activity.responseTimingSampleSize,
+  )} ${issueLabel} with valid timing data`
+}
+
+export function formatIssueResponseCoverage(activity: IssueResponseActivity) {
+  if (activity.status === 'unavailable') {
+    return 'Unavailable'
+  }
+
+  if (activity.sampledIssueCount === 0) {
+    return 'No recent closed issues'
+  }
+
+  const coverage = Math.round(
+    (activity.projectMemberResponseCount / activity.sampledIssueCount) * 100,
+  )
+
+  return `${coverage}%`
+}
+
+export function formatIssueResponseCoverageNote(
+  activity: IssueResponseActivity,
+) {
+  if (activity.status === 'unavailable') {
+    return 'Issue response sample unavailable'
+  }
+
+  if (activity.sampledIssueCount === 0) {
+    return 'No recent closed issues were available'
+  }
+
+  return `${numberFormatter.format(
+    activity.projectMemberResponseCount,
+  )} of ${numberFormatter.format(
+    activity.sampledIssueCount,
+  )} recent closed issues received a project-member response`
 }
 
 function formatCoverageNote(
