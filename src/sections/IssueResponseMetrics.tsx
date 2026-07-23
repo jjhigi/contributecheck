@@ -64,11 +64,10 @@ export function IssueResponseMetrics({
       </button>
 
       {isExpanded && (
-        <div className="review-metrics-panel" id="issue-response-metrics">
-          <p className="review-metrics-scope">
-            Sample: up to 10 recently updated closed issues.
-          </p>
-
+        <div
+          className="review-metrics-panel issue-response-metrics-panel"
+          id="issue-response-metrics"
+        >
           {state.status === 'loading' && (
             <p className="repository-activity-muted">
               Loading issue response metrics...
