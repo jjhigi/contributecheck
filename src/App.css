@@ -304,21 +304,20 @@
 }
 
 .review-metrics-panel {
-  padding-top: 20px;
+  padding-top: 12px;
   border-top: 1px solid var(--border);
 }
 
-.review-metrics-scope {
-  margin: 0 0 16px;
-  color: var(--muted);
-  font-size: 0.9rem;
+.pull-request-metrics-panel,
+.issue-response-metrics-panel {
+  border-top: 0;
 }
 
 .review-metrics-panel .error-message {
   color: var(--danger);
 }
 
-.review-metrics-details {
+.repository-details.review-metrics-details {
   row-gap: 24px;
   padding-top: 0;
   border-top: 0;
@@ -523,6 +522,13 @@
   transition:
     background 0.2s ease,
     color 0.2s ease;
+}
+
+.repository-activity > .repository-link,
+.repository-activity > .review-metrics-toggle,
+.pull-request-activity > .review-metrics-toggle,
+.pull-request-activity > .repository-link {
+  margin-top: 8px;
 }
 
 .repository-link:hover {

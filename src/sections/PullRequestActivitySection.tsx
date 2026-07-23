@@ -117,11 +117,10 @@ export function PullRequestActivitySection({
       </button>
 
       {isReviewMetricsExpanded && (
-        <div className="review-metrics-panel" id="review-metrics">
-          <p className="review-metrics-scope">
-            Sample: up to 10 recently updated closed pull requests.
-          </p>
-
+        <div
+          className="review-metrics-panel pull-request-metrics-panel"
+          id="review-metrics"
+        >
           {reviewMetricsState.status === 'loading' && (
             <p className="pull-request-activity-muted">
               Loading review metrics...

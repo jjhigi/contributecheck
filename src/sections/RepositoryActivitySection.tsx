@@ -86,6 +86,8 @@ export function RepositoryActivitySection({
             </p>
           )}
 
+          <IssueResponseMetrics owner={owner} repositoryName={repositoryName} />
+
           <a
             className="repository-link"
             href={`${repositoryUrl}/commits`}
@@ -96,8 +98,6 @@ export function RepositoryActivitySection({
           </a>
         </>
       )}
-
-      <IssueResponseMetrics owner={owner} repositoryName={repositoryName} />
     </section>
   )
 }
