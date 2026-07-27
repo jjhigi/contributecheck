@@ -50,7 +50,7 @@ export function formatAge(value: string) {
 export function formatFramework(detection: FrameworkDetection) {
   switch (detection.status) {
     case 'detected':
-      return detection.framework
+      return detection.frameworks.join(', ')
     case 'not-detected':
       return 'No supported framework detected'
     case 'unavailable':

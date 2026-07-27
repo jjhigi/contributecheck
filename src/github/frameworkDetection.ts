@@ -24,38 +24,43 @@ type GitHubPackageManifest = {
 }
 
 export type SupportedFramework =
-  | 'Next.js'
   | 'React'
+  | 'Next.js'
   | 'Vue'
-  | 'Angular'
-  | 'Svelte'
-  | 'Electron'
+  | 'Django'
+  | 'Flask'
+  | 'FastAPI'
 
 export type FrameworkDetection =
-  | { status: 'detected'; framework: SupportedFramework }
+  | { status: 'detected'; frameworks: SupportedFramework[] }
   | { status: 'not-detected' }
   | { status: 'unavailable' }
 
-const frameworkDependencies: Array<{
+const javascriptFrameworkDependencies: Array<{
   framework: SupportedFramework
   packageName: string
 }> = [
-  { framework: 'Next.js', packageName: 'next' },
   { framework: 'React', packageName: 'react' },
+  { framework: 'Next.js', packageName: 'next' },
   { framework: 'Vue', packageName: 'vue' },
-  { framework: 'Angular', packageName: '@angular/core' },
-  { framework: 'Svelte', packageName: 'svelte' },
-  { framework: 'Electron', packageName: 'electron' },
+]
+
+const pythonFrameworkDependencies: Array<{
+  framework: SupportedFramework
+  packageName: string
+}> = [
+  { framework: 'Django', packageName: 'django' },
+  { framework: 'Flask', packageName: 'flask' },
+  { framework: 'FastAPI', packageName: 'fastapi' },
 ]
 
 const workspaceManifestLimit = 20
-const frameworkWorkspaceNames = new Set([
+const frameworkDetectionLimit = 3
+const pythonManifestPaths = ['pyproject.toml', 'requirements.txt', 'setup.py']
+const javascriptFrameworkWorkspaceNames = new Set([
   'next',
   'react',
   'vue',
-  'angular',
-  'svelte',
-  'electron',
 ])
 
 /** Detect a supported framework from root and bounded workspace manifests. */
@@ -70,16 +75,39 @@ export async function fetchFrameworkDetection(
       'package.json',
     )
 
-    if (!packageManifest) {
-      return { status: 'not-detected' }
+    const frameworks = packageManifest
+      ? detectJavaScriptFrameworks(packageManifest).slice(
+          0,
+          frameworkDetectionLimit,
+        )
+      : []
+
+    if (packageManifest && frameworks.length < frameworkDetectionLimit) {
+      const workspaceFrameworks = await detectWorkspaceFrameworks(
+        owner,
+        repository,
+        packageManifest,
+      )
+
+      for (const framework of workspaceFrameworks) {
+        if (!frameworks.includes(framework)) {
+          frameworks.push(framework)
+        }
+
+        if (frameworks.length === frameworkDetectionLimit) {
+          break
+        }
+      }
     }
 
-    const framework =
-      detectFramework(packageManifest) ||
-      (await detectWorkspaceFramework(owner, repository, packageManifest))
+    if (frameworks.length > 0) {
+      return { status: 'detected', frameworks }
+    }
 
-    return framework
-      ? { status: 'detected', framework }
+    const pythonFrameworks = await fetchPythonFrameworks(owner, repository)
+
+    return pythonFrameworks.length > 0
+      ? { status: 'detected', frameworks: pythonFrameworks }
       : { status: 'not-detected' }
   } catch {
     return { status: 'unavailable' }
@@ -87,6 +115,18 @@ export async function fetchFrameworkDetection(
 }
 
 async function fetchPackageManifest(
+  owner: string,
+  repository: string,
+  path: string,
+) {
+  const content = await fetchTextFile(owner, repository, path)
+
+  return content
+    ? (JSON.parse(content) as GitHubPackageManifest)
+    : null
+}
+
+async function fetchTextFile(
   owner: string,
   repository: string,
   path: string,
@@ -100,19 +140,42 @@ async function fetchPackageManifest(
   }
 
   if (!response.ok) {
-    throw new Error('Unable to fetch package manifest')
+    throw new Error('Unable to fetch repository file')
   }
 
-  const packageFile = (await response.json()) as GitHubContentFile
+  const file = (await response.json()) as GitHubContentFile
 
-  if (packageFile.encoding !== 'base64' || !packageFile.content) {
-    throw new Error('Invalid package manifest response')
+  if (file.encoding !== 'base64' || !file.content) {
+    throw new Error('Invalid repository file response')
   }
 
-  return JSON.parse(decodeBase64(packageFile.content)) as GitHubPackageManifest
+  return decodeBase64(file.content)
 }
 
-async function detectWorkspaceFramework(
+async function fetchPythonFrameworks(owner: string, repository: string) {
+  const manifests = await Promise.all(
+    pythonManifestPaths.map((path) => fetchTextFile(owner, repository, path)),
+  )
+  const frameworks = new Set<SupportedFramework>()
+
+  for (const manifest of manifests) {
+    if (!manifest) {
+      continue
+    }
+
+    for (const framework of detectPythonFrameworks(manifest)) {
+      frameworks.add(framework)
+    }
+
+    if (frameworks.size >= frameworkDetectionLimit) {
+      break
+    }
+  }
+
+  return [...frameworks]
+}
+
+async function detectWorkspaceFrameworks(
   owner: string,
   repository: string,
   packageManifest: GitHubPackageManifest,
@@ -122,6 +185,7 @@ async function detectWorkspaceFramework(
     repository,
     packageManifest,
   )
+  const frameworks = new Set<SupportedFramework>()
 
   for (const path of workspaceManifestPaths) {
     const workspaceManifest = await fetchPackageManifest(
@@ -129,16 +193,20 @@ async function detectWorkspaceFramework(
       repository,
       path,
     )
-    const framework = workspaceManifest
-      ? detectFramework(workspaceManifest)
-      : null
+    const workspaceFrameworks = workspaceManifest
+      ? detectJavaScriptFrameworks(workspaceManifest)
+      : []
 
-    if (framework) {
-      return framework
+    for (const framework of workspaceFrameworks) {
+      frameworks.add(framework)
+    }
+
+    if (frameworks.size >= frameworkDetectionLimit) {
+      break
     }
   }
 
-  return null
+  return [...frameworks]
 }
 
 async function getWorkspaceManifestPaths(
@@ -146,7 +214,11 @@ async function getWorkspaceManifestPaths(
   repository: string,
   packageManifest: GitHubPackageManifest,
 ) {
-  const patterns = getWorkspacePatterns(packageManifest)
+  const patterns = await getWorkspacePatterns(
+    owner,
+    repository,
+    packageManifest,
+  )
   const paths: string[] = []
 
   for (const pattern of patterns) {
@@ -190,6 +262,26 @@ async function getWorkspaceManifestPaths(
   return [...new Set(paths)].slice(0, workspaceManifestLimit)
 }
 
+async function getWorkspacePatterns(
+  owner: string,
+  repository: string,
+  packageManifest: GitHubPackageManifest,
+) {
+  const packagePatterns = getPackageWorkspacePatterns(packageManifest)
+
+  if (packagePatterns.length > 0) {
+    return packagePatterns
+  }
+
+  const pnpmWorkspace = await fetchTextFile(
+    owner,
+    repository,
+    'pnpm-workspace.yaml',
+  )
+
+  return parsePnpmWorkspacePatterns(pnpmWorkspace)
+}
+
 async function fetchContentEntries(
   owner: string,
   repository: string,
@@ -210,7 +302,7 @@ async function fetchContentEntries(
   return (await response.json()) as GitHubContentEntry[]
 }
 
-function getWorkspacePatterns(packageManifest: GitHubPackageManifest) {
+function getPackageWorkspacePatterns(packageManifest: GitHubPackageManifest) {
   const workspaces = packageManifest.workspaces
 
   if (Array.isArray(workspaces)) {
@@ -228,27 +320,85 @@ function getWorkspacePatterns(packageManifest: GitHubPackageManifest) {
   ) || []
 }
 
-function isFrameworkWorkspace(entry: GitHubContentEntry) {
-  return frameworkWorkspaceNames.has(entry.name?.toLowerCase() || '')
-}
-
-function detectFramework(packageManifest: GitHubPackageManifest) {
-  if (!packageManifest || typeof packageManifest !== 'object') {
-    return null
+function parsePnpmWorkspacePatterns(content: string | null) {
+  if (!content) {
+    return []
   }
 
-  const packageNames = [
+  const patterns: string[] = []
+  let inPackagesSection = false
+
+  for (const line of content.split(/\r?\n/)) {
+    const trimmedLine = line.trim()
+
+    if (trimmedLine === 'packages:') {
+      inPackagesSection = true
+      continue
+    }
+
+    if (inPackagesSection && /^[A-Za-z][\w-]*:\s*$/.test(trimmedLine)) {
+      break
+    }
+
+    if (!inPackagesSection || !trimmedLine.startsWith('-')) {
+      continue
+    }
+
+    const pattern = trimmedLine
+      .slice(1)
+      .trim()
+      .replace(/^(['"])(.*)\1$/, '$2')
+
+    if (pattern) {
+      patterns.push(pattern)
+    }
+  }
+
+  return patterns
+}
+
+function isFrameworkWorkspace(entry: GitHubContentEntry) {
+  return javascriptFrameworkWorkspaceNames.has(entry.name?.toLowerCase() || '')
+}
+
+function detectJavaScriptFrameworks(packageManifest: GitHubPackageManifest) {
+  if (!packageManifest || typeof packageManifest !== 'object') {
+    return []
+  }
+
+  const packageNames = new Set([
     packageManifest.name,
     ...Object.keys(packageManifest.dependencies ?? {}),
     ...Object.keys(packageManifest.devDependencies ?? {}),
     ...Object.keys(packageManifest.peerDependencies ?? {}),
-  ].filter((packageName): packageName is string => typeof packageName === 'string')
+  ].filter((packageName): packageName is string => typeof packageName === 'string'))
 
-  return (
-    frameworkDependencies.find(({ packageName }) =>
-      packageNames.includes(packageName),
-    )?.framework ?? null
-  )
+  return javascriptFrameworkDependencies
+    .filter(({ packageName }) => packageNames.has(packageName))
+    .map(({ framework }) => framework)
+}
+
+function detectPythonFrameworks(content: string) {
+  return pythonFrameworkDependencies
+    .filter(({ packageName }) => contentIncludesPackage(content, packageName))
+    .map(({ framework }) => framework)
+}
+
+function contentIncludesPackage(content: string, packageName: string) {
+  const normalizedPackageName = normalizePackageName(packageName)
+
+  return content.split(/\r?\n/).some((line) => {
+    const packageNames =
+      line.split('#')[0].match(/[A-Za-z][A-Za-z0-9_.-]*/g) || []
+
+    return packageNames.some(
+      (name) => normalizePackageName(name) === normalizedPackageName,
+    )
+  })
+}
+
+function normalizePackageName(packageName: string) {
+  return packageName.toLowerCase().replace(/[-_.]/g, '')
 }
 
 function decodeBase64(value: string) {

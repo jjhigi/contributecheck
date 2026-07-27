@@ -51,8 +51,9 @@ ContributeCheck is not meant to replace GitHub search. It is meant to make contr
   - links to the full open pull request list on GitHub
 - Framework detection:
   - checks the repository's root `package.json`
-  - checks a bounded set of workspace package manifests
-  - detects Next.js, React, Vue, Angular, Svelte, and Electron signals
+  - checks a bounded set of workspace package manifests from `package.json` or `pnpm-workspace.yaml`
+  - checks standard root Python manifests: `pyproject.toml`, `requirements.txt`, and `setup.py`
+  - reports detected React, Next.js, Vue, Django, Flask, and FastAPI signals, up to three per repository
 - Repository activity summary:
   - shows the latest commit date
   - shows the total commits from the last 4 weeks
