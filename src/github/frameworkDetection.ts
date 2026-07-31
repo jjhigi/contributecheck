@@ -30,6 +30,9 @@ export type SupportedFramework =
   | 'Django'
   | 'Flask'
   | 'FastAPI'
+  | 'Spring Boot'
+  | 'Quarkus'
+  | 'Micronaut'
 
 export type FrameworkDetection =
   | { status: 'detected'; frameworks: SupportedFramework[] }
@@ -54,9 +57,22 @@ const pythonFrameworkDependencies: Array<{
   { framework: 'FastAPI', packageName: 'fastapi' },
 ]
 
+const javaFrameworkSignals: Array<{
+  framework: SupportedFramework
+  signals: string[]
+}> = [
+  {
+    framework: 'Spring Boot',
+    signals: ['org.springframework.boot', 'spring-boot-starter'],
+  },
+  { framework: 'Quarkus', signals: ['io.quarkus'] },
+  { framework: 'Micronaut', signals: ['io.micronaut'] },
+]
+
 const workspaceManifestLimit = 20
 const frameworkDetectionLimit = 3
 const pythonManifestPaths = ['pyproject.toml', 'requirements.txt', 'setup.py']
+const javaManifestPaths = ['pom.xml', 'build.gradle', 'build.gradle.kts']
 const javascriptFrameworkWorkspaceNames = new Set([
   'next',
   'react',
@@ -70,16 +86,26 @@ export async function fetchFrameworkDetection(
   primaryLanguage: string | null,
 ): Promise<FrameworkDetection> {
   try {
-    const detectors =
-      primaryLanguage?.toLowerCase() === 'python'
-        ? [
-            () => fetchPythonFrameworks(owner, repository),
-            () => fetchJavaScriptFrameworks(owner, repository),
-          ]
-        : [
-            () => fetchJavaScriptFrameworks(owner, repository),
-            () => fetchPythonFrameworks(owner, repository),
-          ]
+    const normalizedLanguage = primaryLanguage?.toLowerCase()
+    let detectors: Array<() => Promise<SupportedFramework[]>>
+
+    if (normalizedLanguage === 'python') {
+      detectors = [
+        () => fetchPythonFrameworks(owner, repository),
+        () => fetchJavaScriptFrameworks(owner, repository),
+      ]
+    } else if (normalizedLanguage === 'java') {
+      detectors = [
+        () => fetchJavaFrameworks(owner, repository),
+        () => fetchJavaScriptFrameworks(owner, repository),
+        () => fetchPythonFrameworks(owner, repository),
+      ]
+    } else {
+      detectors = [
+        () => fetchJavaScriptFrameworks(owner, repository),
+        () => fetchPythonFrameworks(owner, repository),
+      ]
+    }
 
     for (const detectFrameworks of detectors) {
       const frameworks = await detectFrameworks()
@@ -182,6 +208,29 @@ async function fetchPythonFrameworks(owner: string, repository: string) {
     }
 
     for (const framework of detectPythonFrameworks(manifest)) {
+      frameworks.add(framework)
+    }
+
+    if (frameworks.size >= frameworkDetectionLimit) {
+      break
+    }
+  }
+
+  return [...frameworks]
+}
+
+async function fetchJavaFrameworks(owner: string, repository: string) {
+  const manifests = await Promise.all(
+    javaManifestPaths.map((path) => fetchTextFile(owner, repository, path)),
+  )
+  const frameworks = new Set<SupportedFramework>()
+
+  for (const manifest of manifests) {
+    if (!manifest) {
+      continue
+    }
+
+    for (const framework of detectJavaFrameworks(manifest)) {
       frameworks.add(framework)
     }
 
@@ -399,6 +448,16 @@ function detectJavaScriptFrameworks(packageManifest: GitHubPackageManifest) {
 function detectPythonFrameworks(content: string) {
   return pythonFrameworkDependencies
     .filter(({ packageName }) => contentIncludesPackage(content, packageName))
+    .map(({ framework }) => framework)
+}
+
+function detectJavaFrameworks(content: string) {
+  const normalizedContent = content.toLowerCase()
+
+  return javaFrameworkSignals
+    .filter(({ signals }) =>
+      signals.some((signal) => normalizedContent.includes(signal)),
+    )
     .map(({ framework }) => framework)
 }
 
