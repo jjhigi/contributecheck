@@ -78,7 +78,11 @@ function App() {
       repositoryActivity,
       commitActivity,
     ] = await Promise.all([
-      fetchFrameworkDetection(owner, repository),
+      fetchFrameworkDetection(
+        owner,
+        repository,
+        repositoryResult.repository.language,
+      ),
       fetchCommunityHealth(owner, repository),
       fetchGoodFirstIssues(owner, repository),
       fetchOpenPullRequests(owner, repository),
