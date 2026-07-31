@@ -34,6 +34,7 @@ Status:
 - Good First Issue detection: complete
 - JavaScript/TypeScript framework detection for root and bounded workspace manifests: complete
 - Python framework detection from standard root manifests: complete
+- Java framework detection from standard Maven and Gradle manifests: complete
 - Language-prioritized framework detection: complete
 - Framework detection for additional ecosystems: planned
 
