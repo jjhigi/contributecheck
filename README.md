@@ -50,6 +50,7 @@ ContributeCheck is not meant to replace GitHub search. It is meant to make contr
   - shows the number of different project-member reviewers in the sample
   - links to the full open pull request list on GitHub
 - Framework detection:
+  - uses GitHub's primary language to prioritize JavaScript/TypeScript or Python manifests, with fallback checks for unknown or mixed repositories
   - checks the repository's root `package.json`
   - checks a bounded set of workspace package manifests from `package.json` or `pnpm-workspace.yaml`
   - checks standard root Python manifests: `pyproject.toml`, `requirements.txt`, and `setup.py`

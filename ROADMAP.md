@@ -34,6 +34,7 @@ Status:
 - Good First Issue detection: complete
 - JavaScript/TypeScript framework detection for root and bounded workspace manifests: complete
 - Python framework detection from standard root manifests: complete
+- Language-prioritized framework detection: complete
 - Framework detection for additional ecosystems: planned
 
 ## Phase 3: Repository Health Metrics
