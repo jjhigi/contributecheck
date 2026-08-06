@@ -39,6 +39,10 @@ type LookupState =
     }
   | { status: 'error'; message: string }
 
+type SuccessfulLookup = Extract<LookupState, { status: 'success' }>
+
+const repositoryAnalysisCache = new Map<string, SuccessfulLookup>()
+
 function App() {
   const [repositoryInput, setRepositoryInput] = useState('')
   const [lookupState, setLookupState] = useState<LookupState>({
@@ -56,8 +60,17 @@ function App() {
     }
 
     const { owner, repository } = parsedInput.value
+    const cacheKey = getRepositoryCacheKey(owner, repository)
 
     setRepositoryInput(`${owner}/${repository}`)
+
+    const cachedLookup = repositoryAnalysisCache.get(cacheKey)
+
+    if (cachedLookup) {
+      setLookupState(cachedLookup)
+      return
+    }
+
     setLookupState({ status: 'loading' })
 
     const repositoryResult = await fetchRepository(owner, repository)
@@ -90,7 +103,7 @@ function App() {
       fetchCommitActivity(owner, repository),
     ])
 
-    setLookupState({
+    const successfulLookup: SuccessfulLookup = {
       status: 'success',
       repository: repositoryResult.repository,
       frameworkDetection,
@@ -99,7 +112,13 @@ function App() {
       pullRequestActivity,
       repositoryActivity,
       commitActivity,
-    })
+    }
+
+    if (isCompleteLookup(successfulLookup)) {
+      repositoryAnalysisCache.set(cacheKey, successfulLookup)
+    }
+
+    setLookupState(successfulLookup)
   }
 
   return (
@@ -172,6 +191,21 @@ function App() {
       </section>
     </main>
   )
+}
+
+function getRepositoryCacheKey(owner: string, repository: string) {
+  return `${owner.toLowerCase()}/${repository.toLowerCase()}`
+}
+
+function isCompleteLookup(lookup: SuccessfulLookup) {
+  return [
+    lookup.frameworkDetection,
+    lookup.communityHealth,
+    lookup.goodFirstIssues,
+    lookup.pullRequestActivity,
+    lookup.repositoryActivity,
+    lookup.commitActivity,
+  ].every((result) => result.status !== 'unavailable')
 }
 
 function getRepositoryLookupErrorMessage(

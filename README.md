@@ -19,6 +19,7 @@ ContributeCheck is not meant to replace GitHub search. It is meant to make contr
 - GitHub repository lookup by full repository URL.
 - Input validation and normalization.
 - Loading and error states.
+- Session-only reuse of complete repository analyses to reduce repeated GitHub requests.
 - Basic repository details:
   - repository name
   - owner
