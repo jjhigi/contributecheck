@@ -69,7 +69,7 @@ const javaFrameworkSignals: Array<{
   { framework: 'Micronaut', signals: ['io.micronaut'] },
 ]
 
-const workspaceManifestLimit = 20
+const workspaceManifestLimit = 10
 const frameworkDetectionLimit = 3
 const pythonManifestPaths = ['pyproject.toml', 'requirements.txt', 'setup.py']
 const javaManifestPaths = ['pom.xml', 'build.gradle', 'build.gradle.kts']
