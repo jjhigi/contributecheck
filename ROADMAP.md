@@ -99,8 +99,8 @@ reviewers are available on demand for a bounded sample, with an in-card
 calculation explanation. Repository Activity also provides on-demand issue
 response coverage and timing for a bounded sample of recent closed issues. It
 also provides framework signals from supported dependencies and package names
-in a repository's root or bounded workspace manifests, plus a 12-week commit
-activity trend. The
+in a repository's root, with bounded workspace manifests available on demand,
+plus a 12-week commit activity trend. The
 pull request summary keeps merge and first-time contributor metrics deferred
 until they can provide a clearer signal with a more efficient analysis.
 Issue backlog age, broader repository health metrics, and release history are

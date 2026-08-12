@@ -53,7 +53,7 @@ ContributeCheck is not meant to replace GitHub search. It is meant to make contr
 - Framework detection:
   - uses GitHub's primary language to prioritize JavaScript/TypeScript, Python, or Java manifests, with fallback checks for unknown or mixed repositories
   - checks the repository's root `package.json`
-  - checks a bounded set of workspace package manifests from `package.json` or `pnpm-workspace.yaml`
+  - lets users scan a bounded set of workspace package manifests from `package.json` or `pnpm-workspace.yaml` on demand
   - checks standard root Python manifests: `pyproject.toml`, `requirements.txt`, and `setup.py`
   - checks standard root Java manifests: `pom.xml`, `build.gradle`, and `build.gradle.kts`
   - reports detected React, Next.js, Vue, Django, Flask, FastAPI, Spring Boot, Quarkus, and Micronaut signals, up to three per repository

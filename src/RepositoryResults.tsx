@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type {
   CommunityHealth,
   GitHubRepository,
@@ -8,7 +9,11 @@ import type {
   PullRequestActivity,
   RepositoryActivity,
 } from './github/activityApi'
-import type { FrameworkDetection } from './github/frameworkDetection'
+import {
+  fetchWorkspaceFrameworkDetection,
+  type FrameworkDetection,
+  type WorkspaceFrameworkDetection,
+} from './github/frameworkDetection'
 import { CommunityHealthSection } from './sections/CommunityHealthSection'
 import { GoodFirstIssuesSection } from './sections/GoodFirstIssuesSection'
 import { PullRequestActivitySection } from './sections/PullRequestActivitySection'
@@ -63,7 +68,14 @@ export function RepositoryResults({
           </div>
           <div>
             <dt>Framework / stack</dt>
-            <dd>{formatFramework(frameworkDetection)}</dd>
+            <dd>
+              <FrameworkDetectionDetails
+                key={`${repository.owner.login}/${repository.name}`}
+                owner={repository.owner.login}
+                repositoryName={repository.name}
+                frameworkDetection={frameworkDetection}
+              />
+            </dd>
           </div>
           <div>
             <dt>License</dt>
@@ -141,4 +153,94 @@ export function RepositoryResults({
       />
     </article>
   )
+}
+
+type WorkspaceScanState = 'idle' | 'loading' | 'complete' | 'unavailable'
+
+function FrameworkDetectionDetails({
+  owner,
+  repositoryName,
+  frameworkDetection,
+}: {
+  owner: string
+  repositoryName: string
+  frameworkDetection: FrameworkDetection
+}) {
+  const [detection, setDetection] = useState(frameworkDetection)
+  const [workspaceScanState, setWorkspaceScanState] =
+    useState<WorkspaceScanState>('idle')
+
+  async function handleWorkspaceScan() {
+    if (
+      workspaceScanState === 'loading' ||
+      workspaceScanState === 'complete'
+    ) {
+      return
+    }
+
+    setWorkspaceScanState('loading')
+    const workspaceDetection = await fetchWorkspaceFrameworkDetection(
+      owner,
+      repositoryName,
+    )
+
+    if (workspaceDetection.status === 'unavailable') {
+      setWorkspaceScanState('unavailable')
+      return
+    }
+
+    setDetection(mergeFrameworkDetections(detection, workspaceDetection))
+    setWorkspaceScanState('complete')
+  }
+
+  const canScanWorkspace =
+    detection.status !== 'unavailable' &&
+    detection.workspaceAvailable &&
+    workspaceScanState !== 'complete'
+
+  return (
+    <div className="framework-detection">
+      <span>{formatFramework(detection)}</span>
+
+      {canScanWorkspace && (
+        <button
+          className="framework-scan-button"
+          type="button"
+          onClick={handleWorkspaceScan}
+          disabled={workspaceScanState === 'loading'}
+        >
+          {workspaceScanState === 'loading'
+            ? 'Scanning workspace packages...'
+            : workspaceScanState === 'unavailable'
+              ? 'Retry workspace scan'
+              : 'Scan workspace packages'}
+        </button>
+      )}
+
+      {workspaceScanState === 'unavailable' && (
+        <span className="framework-scan-error">
+          Workspace scan unavailable.
+        </span>
+      )}
+    </div>
+  )
+}
+
+function mergeFrameworkDetections(
+  currentDetection: FrameworkDetection,
+  workspaceDetection: WorkspaceFrameworkDetection,
+): FrameworkDetection {
+  const currentFrameworks =
+    currentDetection.status === 'detected' ? currentDetection.frameworks : []
+  const workspaceFrameworks =
+    workspaceDetection.status === 'detected'
+      ? workspaceDetection.frameworks
+      : []
+  const frameworks = [
+    ...new Set([...currentFrameworks, ...workspaceFrameworks]),
+  ].slice(0, 3)
+
+  return frameworks.length > 0
+    ? { status: 'detected', frameworks, workspaceAvailable: false }
+    : { status: 'not-detected', workspaceAvailable: false }
 }

@@ -35,9 +35,23 @@ export type SupportedFramework =
   | 'Micronaut'
 
 export type FrameworkDetection =
+  | {
+      status: 'detected'
+      frameworks: SupportedFramework[]
+      workspaceAvailable: boolean
+    }
+  | { status: 'not-detected'; workspaceAvailable: boolean }
+  | { status: 'unavailable' }
+
+export type WorkspaceFrameworkDetection =
   | { status: 'detected'; frameworks: SupportedFramework[] }
   | { status: 'not-detected' }
   | { status: 'unavailable' }
+
+type FrameworkCandidate = {
+  frameworks: SupportedFramework[]
+  workspaceAvailable: boolean
+}
 
 const javascriptFrameworkDependencies: Array<{
   framework: SupportedFramework
@@ -79,7 +93,7 @@ const javascriptFrameworkWorkspaceNames = new Set([
   'vue',
 ])
 
-/** Detect a supported framework from root and bounded workspace manifests. */
+/** Detect root framework signals and whether workspace packages are available. */
 export async function fetchFrameworkDetection(
   owner: string,
   repository: string,
@@ -87,41 +101,83 @@ export async function fetchFrameworkDetection(
 ): Promise<FrameworkDetection> {
   try {
     const normalizedLanguage = primaryLanguage?.toLowerCase()
-    let detectors: Array<() => Promise<SupportedFramework[]>>
+    let detectors: Array<() => Promise<FrameworkCandidate>>
 
     if (normalizedLanguage === 'python') {
       detectors = [
         () => fetchPythonFrameworks(owner, repository),
-        () => fetchJavaScriptFrameworks(owner, repository),
+        () => fetchJavaScriptRootFrameworks(owner, repository),
       ]
     } else if (normalizedLanguage === 'java') {
       detectors = [
         () => fetchJavaFrameworks(owner, repository),
-        () => fetchJavaScriptFrameworks(owner, repository),
+        () => fetchJavaScriptRootFrameworks(owner, repository),
         () => fetchPythonFrameworks(owner, repository),
       ]
     } else {
       detectors = [
-        () => fetchJavaScriptFrameworks(owner, repository),
+        () => fetchJavaScriptRootFrameworks(owner, repository),
         () => fetchPythonFrameworks(owner, repository),
       ]
     }
 
-    for (const detectFrameworks of detectors) {
-      const frameworks = await detectFrameworks()
+    let workspaceAvailable = false
 
-      if (frameworks.length > 0) {
-        return { status: 'detected', frameworks }
+    for (const detectFrameworks of detectors) {
+      const candidate = await detectFrameworks()
+      workspaceAvailable ||= candidate.workspaceAvailable
+
+      if (candidate.frameworks.length > 0) {
+        return {
+          status: 'detected',
+          frameworks: candidate.frameworks,
+          workspaceAvailable,
+        }
       }
     }
 
-    return { status: 'not-detected' }
+    return { status: 'not-detected', workspaceAvailable }
   } catch {
     return { status: 'unavailable' }
   }
 }
 
-async function fetchJavaScriptFrameworks(owner: string, repository: string) {
+export async function fetchWorkspaceFrameworkDetection(
+  owner: string,
+  repository: string,
+): Promise<WorkspaceFrameworkDetection> {
+  try {
+    const packageManifest = await fetchPackageManifest(
+      owner,
+      repository,
+      'package.json',
+    )
+
+    if (!packageManifest) {
+      return { status: 'not-detected' }
+    }
+
+    const frameworks = await detectWorkspaceFrameworks(
+      owner,
+      repository,
+      packageManifest,
+    )
+
+    return frameworks.length > 0
+      ? {
+          status: 'detected',
+          frameworks: frameworks.slice(0, frameworkDetectionLimit),
+        }
+      : { status: 'not-detected' }
+  } catch {
+    return { status: 'unavailable' }
+  }
+}
+
+async function fetchJavaScriptRootFrameworks(
+  owner: string,
+  repository: string,
+): Promise<FrameworkCandidate> {
   const packageManifest = await fetchPackageManifest(
     owner,
     repository,
@@ -129,7 +185,7 @@ async function fetchJavaScriptFrameworks(owner: string, repository: string) {
   )
 
   if (!packageManifest) {
-    return []
+    return { frameworks: [], workspaceAvailable: false }
   }
 
   const frameworks = detectJavaScriptFrameworks(packageManifest).slice(
@@ -137,25 +193,20 @@ async function fetchJavaScriptFrameworks(owner: string, repository: string) {
     frameworkDetectionLimit,
   )
 
-  if (frameworks.length < frameworkDetectionLimit) {
-    const workspaceFrameworks = await detectWorkspaceFrameworks(
-      owner,
-      repository,
-      packageManifest,
-    )
-
-    for (const framework of workspaceFrameworks) {
-      if (!frameworks.includes(framework)) {
-        frameworks.push(framework)
-      }
-
-      if (frameworks.length === frameworkDetectionLimit) {
-        break
-      }
-    }
+  if (frameworks.length === frameworkDetectionLimit) {
+    return { frameworks, workspaceAvailable: false }
   }
 
-  return frameworks
+  const workspacePatterns = await getWorkspacePatterns(
+    owner,
+    repository,
+    packageManifest,
+  )
+
+  return {
+    frameworks,
+    workspaceAvailable: workspacePatterns.length > 0,
+  }
 }
 
 async function fetchPackageManifest(
@@ -196,7 +247,10 @@ async function fetchTextFile(
   return decodeBase64(file.content)
 }
 
-async function fetchPythonFrameworks(owner: string, repository: string) {
+async function fetchPythonFrameworks(
+  owner: string,
+  repository: string,
+): Promise<FrameworkCandidate> {
   const manifests = await Promise.all(
     pythonManifestPaths.map((path) => fetchTextFile(owner, repository, path)),
   )
@@ -216,10 +270,13 @@ async function fetchPythonFrameworks(owner: string, repository: string) {
     }
   }
 
-  return [...frameworks]
+  return { frameworks: [...frameworks], workspaceAvailable: false }
 }
 
-async function fetchJavaFrameworks(owner: string, repository: string) {
+async function fetchJavaFrameworks(
+  owner: string,
+  repository: string,
+): Promise<FrameworkCandidate> {
   const manifests = await Promise.all(
     javaManifestPaths.map((path) => fetchTextFile(owner, repository, path)),
   )
@@ -239,7 +296,7 @@ async function fetchJavaFrameworks(owner: string, repository: string) {
     }
   }
 
-  return [...frameworks]
+  return { frameworks: [...frameworks], workspaceAvailable: false }
 }
 
 async function detectWorkspaceFrameworks(
