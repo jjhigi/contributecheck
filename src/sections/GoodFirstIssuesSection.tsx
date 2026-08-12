@@ -21,7 +21,7 @@ export function GoodFirstIssuesSection({
 
       {goodFirstIssues.status === 'unavailable' ? (
         <p className="good-first-issues-muted">
-          Good first issue data is unavailable for this repository.
+          Good first issue data unavailable. GitHub did not return a result.
         </p>
       ) : goodFirstIssues.issues.length === 0 ? (
         <p className="good-first-issues-muted">

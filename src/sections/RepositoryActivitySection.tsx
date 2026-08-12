@@ -52,7 +52,7 @@ export function RepositoryActivitySection({
       repositoryActivity.status === 'unavailable' &&
       commitActivity.status === 'unavailable' ? (
         <p className="repository-activity-muted">
-          Commit data is unavailable for this repository.
+          Commit data unavailable. GitHub did not return a result.
         </p>
       ) : !hasActivity ? (
         <p className="repository-activity-muted">No recent commits found.</p>
@@ -70,7 +70,7 @@ export function RepositoryActivitySection({
               <dd>
                 {commitActivity.status === 'available'
                   ? numberFormatter.format(recentCommitCount)
-                  : 'Unavailable'}
+                  : 'GitHub did not return this metric.'}
               </dd>
             </div>
           </dl>
@@ -82,7 +82,7 @@ export function RepositoryActivitySection({
             />
           ) : (
             <p className="repository-activity-muted">
-              Commit trend data is unavailable for this repository.
+              Commit trend data unavailable. GitHub did not return a result.
             </p>
           )}
 

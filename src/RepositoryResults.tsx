@@ -219,7 +219,7 @@ function FrameworkDetectionDetails({
 
       {workspaceScanState === 'unavailable' && (
         <span className="framework-scan-error">
-          Workspace scan unavailable.
+          Workspace scan unavailable. Try again later.
         </span>
       )}
     </div>

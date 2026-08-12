@@ -52,9 +52,9 @@ export function formatFramework(detection: FrameworkDetection) {
     case 'detected':
       return detection.frameworks.join(', ')
     case 'not-detected':
-      return 'No supported framework detected'
+      return 'No supported framework detected in the files checked.'
     case 'unavailable':
-      return 'Unavailable'
+      return 'Framework data unavailable. GitHub did not return a result.'
   }
 }
 
@@ -66,7 +66,7 @@ export function formatFirstReviewTime(activity: PullRequestReviewActivity) {
       ? activity.medianFirstReviewTimeDays
       : null,
     activity.status === 'available' ? activity.reviewedPullRequestCount : 0,
-    'No qualifying review',
+    'No review from someone other than the author found.',
   )
 }
 
@@ -84,7 +84,7 @@ export function formatProjectMemberReviewTime(
     activity.status === 'available'
       ? activity.projectMemberReviewCount
       : 0,
-    'No qualifying project-member review',
+    'No project-member review found.',
   )
 }
 
@@ -96,11 +96,11 @@ function formatReviewTime(
   noResponseLabel: string,
 ) {
   if (activity.status === 'unavailable') {
-    return 'Request unavailable'
+    return 'Review data unavailable. GitHub did not return a result.'
   }
 
   if (activity.sampledPullRequestCount === 0) {
-    return 'No recent closed pull requests'
+    return 'No recent closed pull requests found.'
   }
 
   if (sampleSize === 0) {
@@ -108,11 +108,11 @@ function formatReviewTime(
       return noResponseLabel
     }
 
-    return 'No valid timing data'
+    return 'No valid review timing data.'
   }
 
   if (medianDays === null) {
-    return 'No valid timing data'
+    return 'No valid review timing data.'
   }
 
   return formatDuration(medianDays)
@@ -122,7 +122,7 @@ export function formatFirstReviewSampleNote(
   activity: PullRequestReviewActivity,
 ) {
   if (activity.status === 'unavailable') {
-    return 'Review request unavailable'
+    return 'Review data unavailable. GitHub did not return a result.'
   }
 
   return formatReviewSampleNote(
@@ -137,7 +137,7 @@ export function formatProjectMemberReviewSampleNote(
   activity: PullRequestReviewActivity,
 ) {
   if (activity.status === 'unavailable') {
-    return 'Review request unavailable'
+    return 'Review data unavailable. GitHub did not return a result.'
   }
 
   return formatReviewSampleNote(
@@ -155,7 +155,7 @@ function formatReviewSampleNote(
   reviewDescription: string,
 ) {
   if (activity.sampledPullRequestCount === 0) {
-    return 'No recent closed pull requests were available'
+    return 'No recent closed pull requests found.'
   }
 
   if (sampleSize === 0) {
@@ -202,11 +202,11 @@ function formatCoverage(
   reviewedCount: number,
 ) {
   if (activity.status === 'unavailable') {
-    return 'Request unavailable'
+    return 'Review data unavailable. GitHub did not return a result.'
   }
 
   if (activity.sampledPullRequestCount === 0) {
-    return 'No recent closed pull requests'
+    return 'No recent closed pull requests found.'
   }
 
   const coverage = Math.round(
@@ -243,11 +243,11 @@ export function formatProjectMemberReviewerNote(
   activity: PullRequestReviewActivity,
 ) {
   if (activity.status === 'unavailable') {
-    return 'Review request unavailable'
+    return 'Review data unavailable. GitHub did not return a result.'
   }
 
   if (activity.sampledPullRequestCount === 0) {
-    return 'No recent closed pull requests were available'
+    return 'No recent closed pull requests found.'
   }
 
   return `Each reviewer counted once across ${numberFormatter.format(
@@ -257,23 +257,23 @@ export function formatProjectMemberReviewerNote(
 
 export function formatIssueResponseTime(activity: IssueResponseActivity) {
   if (activity.status === 'unavailable') {
-    return 'Request unavailable'
+    return 'Issue data unavailable. GitHub did not return a result.'
   }
 
   if (activity.sampledIssueCount === 0) {
-    return 'No recent closed issues'
+    return 'No recent closed GitHub issues found.'
   }
 
   if (activity.responseTimingSampleSize === 0) {
     if (activity.projectMemberResponseCount === 0) {
-      return 'No project-member response'
+      return 'No project-member response found.'
     }
 
-    return 'No valid timing data'
+    return 'No valid response timing data.'
   }
 
   if (activity.medianProjectMemberResponseTimeDays === null) {
-    return 'No valid timing data'
+    return 'No valid response timing data.'
   }
 
   return formatDuration(activity.medianProjectMemberResponseTimeDays)
@@ -281,11 +281,11 @@ export function formatIssueResponseTime(activity: IssueResponseActivity) {
 
 export function formatIssueResponseSampleNote(activity: IssueResponseActivity) {
   if (activity.status === 'unavailable') {
-    return 'Issue response request unavailable'
+    return 'Issue data unavailable. GitHub did not return a result.'
   }
 
   if (activity.sampledIssueCount === 0) {
-    return 'No recent closed issues were available'
+    return 'No recent closed GitHub issues found.'
   }
 
   if (activity.responseTimingSampleSize === 0) {
@@ -311,11 +311,11 @@ export function formatIssueResponseSampleNote(activity: IssueResponseActivity) {
 
 export function formatIssueResponseCoverage(activity: IssueResponseActivity) {
   if (activity.status === 'unavailable') {
-    return 'Request unavailable'
+    return 'Issue data unavailable. GitHub did not return a result.'
   }
 
   if (activity.sampledIssueCount === 0) {
-    return 'No recent closed issues'
+    return 'No recent closed GitHub issues found.'
   }
 
   const coverage = Math.round(
@@ -329,11 +329,11 @@ export function formatIssueResponseCoverageNote(
   activity: IssueResponseActivity,
 ) {
   if (activity.status === 'unavailable') {
-    return 'Issue response request unavailable'
+    return 'Issue data unavailable. GitHub did not return a result.'
   }
 
   if (activity.sampledIssueCount === 0) {
-    return 'No recent closed issues were available'
+    return 'No recent closed GitHub issues found.'
   }
 
   return `${numberFormatter.format(
@@ -349,11 +349,11 @@ function formatCoverageNote(
   reviewLabel: string,
 ) {
   if (activity.status === 'unavailable') {
-    return 'Review request unavailable'
+    return 'Review data unavailable. GitHub did not return a result.'
   }
 
   if (activity.sampledPullRequestCount === 0) {
-    return 'No recent closed pull requests were available'
+    return 'No recent closed pull requests found.'
   }
 
   return `${numberFormatter.format(

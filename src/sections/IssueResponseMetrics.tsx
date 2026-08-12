@@ -77,8 +77,7 @@ export function IssueResponseMetrics({
           {state.status === 'loaded' &&
             state.activity.status === 'unavailable' && (
               <p className="error-message">
-                Issue response request unavailable. GitHub could not provide
-                this sample right now. Try again in a moment.
+                Issue data unavailable. GitHub did not return a result.
               </p>
             )}
 
