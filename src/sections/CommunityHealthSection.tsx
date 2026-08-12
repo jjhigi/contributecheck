@@ -24,7 +24,7 @@ export function CommunityHealthSection({
 
       {communityHealth.status === 'unavailable' ? (
         <p className="community-health-unavailable">
-          Community health data is unavailable for this repository.
+          Community health data unavailable. GitHub did not return a result.
         </p>
       ) : (
         <dl className="community-health-list">

@@ -86,7 +86,7 @@ export function PullRequestActivitySection({
 
       {pullRequestActivity.status !== 'available' ? (
         <p className="pull-request-activity-muted">
-          Pull request data is unavailable for this repository.
+          Pull request data unavailable. GitHub did not return a result.
         </p>
       ) : (
         <dl className="repository-details pull-request-summary">
@@ -130,8 +130,7 @@ export function PullRequestActivitySection({
           {reviewMetricsState.status === 'loaded' &&
             reviewMetricsState.activity.status === 'unavailable' && (
               <p className="error-message">
-                Review metrics request unavailable. GitHub could not provide
-                this sample right now. Try again in a moment.
+                Review data unavailable. GitHub did not return a result.
               </p>
             )}
 
