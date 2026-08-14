@@ -16,15 +16,15 @@ export function RepositoryActivitySection({
   owner: string
   repositoryName: string
   repositoryUrl: string
-  repositoryActivity: RepositoryActivity
-  commitActivity: CommitActivity
+  repositoryActivity: RepositoryActivity | null
+  commitActivity: CommitActivity | null
 }) {
   const latestCommit =
-    repositoryActivity.status === 'available'
+    repositoryActivity?.status === 'available'
       ? repositoryActivity.latestCommit
       : undefined
   const weeks =
-    commitActivity.status === 'available' ? commitActivity.weeks : []
+    commitActivity?.status === 'available' ? commitActivity.weeks : []
   const recentCommitCount = weeks
     .slice(-4)
     .reduce((total, week) => total + week.total, 0)
@@ -48,9 +48,13 @@ export function RepositoryActivitySection({
         </p>
       </div>
 
-      {!hasActivity &&
-      repositoryActivity.status === 'unavailable' &&
-      commitActivity.status === 'unavailable' ? (
+      {!repositoryActivity || !commitActivity ? (
+        <p className="repository-activity-muted status-message">
+          Loading repository activity...
+        </p>
+      ) : !hasActivity &&
+        repositoryActivity.status === 'unavailable' &&
+        commitActivity.status === 'unavailable' ? (
         <p className="repository-activity-muted">
           Commit data unavailable. GitHub did not return a result.
         </p>

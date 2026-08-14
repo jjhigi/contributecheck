@@ -3,7 +3,7 @@ import type { GoodFirstIssues } from '../github/repositoryApi'
 export function GoodFirstIssuesSection({
   goodFirstIssues,
 }: {
-  goodFirstIssues: GoodFirstIssues
+  goodFirstIssues: GoodFirstIssues | null
 }) {
   return (
     <section
@@ -19,7 +19,11 @@ export function GoodFirstIssuesSection({
         </p>
       </div>
 
-      {goodFirstIssues.status === 'unavailable' ? (
+      {!goodFirstIssues ? (
+        <p className="good-first-issues-muted status-message">
+          Loading good first issues...
+        </p>
+      ) : goodFirstIssues.status === 'unavailable' ? (
         <p className="good-first-issues-muted">
           Good first issue data unavailable. GitHub did not return a result.
         </p>

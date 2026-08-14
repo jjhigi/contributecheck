@@ -6,7 +6,7 @@ import type {
 export function CommunityHealthSection({
   communityHealth,
 }: {
-  communityHealth: CommunityHealth
+  communityHealth: CommunityHealth | null
 }) {
   return (
     <section
@@ -22,7 +22,11 @@ export function CommunityHealthSection({
         </p>
       </div>
 
-      {communityHealth.status === 'unavailable' ? (
+      {!communityHealth ? (
+        <p className="community-health-unavailable status-message">
+          Loading community health data...
+        </p>
+      ) : communityHealth.status === 'unavailable' ? (
         <p className="community-health-unavailable">
           Community health data unavailable. GitHub did not return a result.
         </p>
