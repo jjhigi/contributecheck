@@ -32,7 +32,7 @@ export function PullRequestActivitySection({
   owner: string
   repositoryName: string
   repositoryUrl: string
-  pullRequestActivity: PullRequestActivity
+  pullRequestActivity: PullRequestActivity | null
 }) {
   const [isReviewMetricsExpanded, setIsReviewMetricsExpanded] =
     useState(false)
@@ -84,7 +84,11 @@ export function PullRequestActivitySection({
         </p>
       </div>
 
-      {pullRequestActivity.status !== 'available' ? (
+      {!pullRequestActivity ? (
+        <p className="pull-request-activity-muted status-message">
+          Loading pull request activity...
+        </p>
+      ) : pullRequestActivity.status !== 'available' ? (
         <p className="pull-request-activity-muted">
           Pull request data unavailable. GitHub did not return a result.
         </p>
@@ -105,166 +109,174 @@ export function PullRequestActivitySection({
         </dl>
       )}
 
-      <button
-        className="review-metrics-toggle"
-        type="button"
-        aria-controls="review-metrics"
-        aria-expanded={isReviewMetricsExpanded}
-        onClick={handleReviewMetricsClick}
-        disabled={reviewMetricsState.status === 'loading'}
-      >
-        {reviewMetricsButtonLabel}
-      </button>
-
-      {isReviewMetricsExpanded && (
-        <div
-          className="review-metrics-panel pull-request-metrics-panel"
-          id="review-metrics"
-        >
-          {reviewMetricsState.status === 'loading' && (
-            <p className="pull-request-activity-muted">
-              Loading review metrics...
-            </p>
-          )}
-
-          {reviewMetricsState.status === 'loaded' &&
-            reviewMetricsState.activity.status === 'unavailable' && (
-              <p className="error-message">
-                Review data unavailable. GitHub did not return a result.
-              </p>
-            )}
-
-          {reviewMetricsState.status === 'loaded' &&
-            reviewMetricsState.activity.status === 'available' && (
-              <dl className="repository-details review-metrics-details">
-                <div>
-                  <dt>Median time to first review</dt>
-                  <dd>
-                    <span className="metric-value">
-                      {formatFirstReviewTime(reviewMetricsState.activity)}
-                    </span>
-                    <span className="metric-note">
-                      {formatFirstReviewSampleNote(
-                        reviewMetricsState.activity,
-                      )}
-                    </span>
-                  </dd>
-                </div>
-                <div>
-                  <dt>Pull requests receiving a review</dt>
-                  <dd>
-                    <span className="metric-value">
-                      {formatReviewCoverage(reviewMetricsState.activity)}
-                    </span>
-                    <span className="metric-note">
-                      {formatReviewCoverageNote(reviewMetricsState.activity)}
-                    </span>
-                  </dd>
-                </div>
-                <div>
-                  <dt>Median time to first project-member review</dt>
-                  <dd>
-                    <span className="metric-value">
-                      {formatProjectMemberReviewTime(
-                        reviewMetricsState.activity,
-                      )}
-                    </span>
-                    <span className="metric-note">
-                      {formatProjectMemberReviewSampleNote(
-                        reviewMetricsState.activity,
-                      )}
-                    </span>
-                  </dd>
-                </div>
-                <div>
-                  <dt>Pull requests receiving a project-member review</dt>
-                  <dd>
-                    <span className="metric-value">
-                      {formatProjectMemberReviewCoverage(
-                        reviewMetricsState.activity,
-                      )}
-                    </span>
-                    <span className="metric-note">
-                      {formatProjectMemberReviewCoverageNote(
-                        reviewMetricsState.activity,
-                      )}
-                    </span>
-                  </dd>
-                </div>
-                <div>
-                  <dt>Different project-member reviewers</dt>
-                  <dd>
-                    <span className="metric-value">
-                      {numberFormatter.format(
-                        reviewMetricsState.activity.projectMemberReviewerCount,
-                      )}
-                    </span>
-                    <span className="metric-note">
-                      {formatProjectMemberReviewerNote(
-                        reviewMetricsState.activity,
-                      )}
-                    </span>
-                  </dd>
-                </div>
-              </dl>
-            )}
-
+      {pullRequestActivity && (
+        <>
           <button
-            className="review-metrics-toggle metric-explanation-toggle"
+            className="review-metrics-toggle"
             type="button"
-            aria-controls="review-metrics-explanation"
-            aria-expanded={isCalculationExpanded}
-            onClick={() => setIsCalculationExpanded((expanded) => !expanded)}
+            aria-controls="review-metrics"
+            aria-expanded={isReviewMetricsExpanded}
+            onClick={handleReviewMetricsClick}
+            disabled={reviewMetricsState.status === 'loading'}
           >
-            How is this calculated?
+            {reviewMetricsButtonLabel}
           </button>
 
-          {isCalculationExpanded && (
+          {isReviewMetricsExpanded && (
             <div
-              className="metric-explanation"
-              id="review-metrics-explanation"
+              className="review-metrics-panel pull-request-metrics-panel"
+              id="review-metrics"
             >
-              <ul>
-                <li>
-                  Sample: up to 10 recently updated closed pull requests.
-                </li>
-                <li>
-                  For each pull request, the first submitted review from
-                  someone other than the author is used to measure review
-                  timing.
-                </li>
-                <li>
-                  Project-member reviews are from GitHub users identified as
-                  repository owners, members, or collaborators.
-                </li>
-                <li>
-                  Median timing uses only pull requests with valid timing
-                  data, while coverage shows the percentage of sampled pull
-                  requests that received the relevant review.
-                </li>
-                <li>
-                  A 0% coverage result means the sample loaded but no sampled
-                  pull requests received the relevant review; an unavailable
-                  request is shown separately above.
-                </li>
-                <li>
-                  Each project member is counted once, even if they reviewed
-                  more than one sampled PR.
-                </li>
-              </ul>
+              {reviewMetricsState.status === 'loading' && (
+                <p className="pull-request-activity-muted">
+                  Loading review metrics...
+                </p>
+              )}
+
+              {reviewMetricsState.status === 'loaded' &&
+                reviewMetricsState.activity.status === 'unavailable' && (
+                  <p className="error-message">
+                    Review data unavailable. GitHub did not return a result.
+                  </p>
+                )}
+
+              {reviewMetricsState.status === 'loaded' &&
+                reviewMetricsState.activity.status === 'available' && (
+                  <dl className="repository-details review-metrics-details">
+                    <div>
+                      <dt>Median time to first review</dt>
+                      <dd>
+                        <span className="metric-value">
+                          {formatFirstReviewTime(reviewMetricsState.activity)}
+                        </span>
+                        <span className="metric-note">
+                          {formatFirstReviewSampleNote(
+                            reviewMetricsState.activity,
+                          )}
+                        </span>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Pull requests receiving a review</dt>
+                      <dd>
+                        <span className="metric-value">
+                          {formatReviewCoverage(reviewMetricsState.activity)}
+                        </span>
+                        <span className="metric-note">
+                          {formatReviewCoverageNote(
+                            reviewMetricsState.activity,
+                          )}
+                        </span>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Median time to first project-member review</dt>
+                      <dd>
+                        <span className="metric-value">
+                          {formatProjectMemberReviewTime(
+                            reviewMetricsState.activity,
+                          )}
+                        </span>
+                        <span className="metric-note">
+                          {formatProjectMemberReviewSampleNote(
+                            reviewMetricsState.activity,
+                          )}
+                        </span>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Pull requests receiving a project-member review</dt>
+                      <dd>
+                        <span className="metric-value">
+                          {formatProjectMemberReviewCoverage(
+                            reviewMetricsState.activity,
+                          )}
+                        </span>
+                        <span className="metric-note">
+                          {formatProjectMemberReviewCoverageNote(
+                            reviewMetricsState.activity,
+                          )}
+                        </span>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Different project-member reviewers</dt>
+                      <dd>
+                        <span className="metric-value">
+                          {numberFormatter.format(
+                            reviewMetricsState.activity.projectMemberReviewerCount,
+                          )}
+                        </span>
+                        <span className="metric-note">
+                          {formatProjectMemberReviewerNote(
+                            reviewMetricsState.activity,
+                          )}
+                        </span>
+                      </dd>
+                    </div>
+                  </dl>
+                )}
+
+              <button
+                className="review-metrics-toggle metric-explanation-toggle"
+                type="button"
+                aria-controls="review-metrics-explanation"
+                aria-expanded={isCalculationExpanded}
+                onClick={() =>
+                  setIsCalculationExpanded((expanded) => !expanded)
+                }
+              >
+                How is this calculated?
+              </button>
+
+              {isCalculationExpanded && (
+                <div
+                  className="metric-explanation"
+                  id="review-metrics-explanation"
+                >
+                  <ul>
+                    <li>
+                      Sample: up to 10 recently updated closed pull requests.
+                    </li>
+                    <li>
+                      For each pull request, the first submitted review from
+                      someone other than the author is used to measure review
+                      timing.
+                    </li>
+                    <li>
+                      Project-member reviews are from GitHub users identified
+                      as repository owners, members, or collaborators.
+                    </li>
+                    <li>
+                      Median timing uses only pull requests with valid timing
+                      data, while coverage shows the percentage of sampled
+                      pull requests that received the relevant review.
+                    </li>
+                    <li>
+                      A 0% coverage result means the sample loaded but no
+                      sampled pull requests received the relevant review; an
+                      unavailable request is shown separately above.
+                    </li>
+                    <li>
+                      Each project member is counted once, even if they
+                      reviewed more than one sampled PR.
+                    </li>
+                  </ul>
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
 
-      <a
-        className="repository-link"
-        href={`${repositoryUrl}/pulls`}
-        target="_blank"
-        rel="noreferrer"
-      >
-        View open pull requests
-      </a>
+          <a
+            className="repository-link"
+            href={`${repositoryUrl}/pulls`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            View open pull requests
+          </a>
+        </>
+      )}
     </section>
   )
 }
