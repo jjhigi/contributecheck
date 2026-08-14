@@ -38,6 +38,10 @@ type RepositoryLoadedLookup = {
   repository: GitHubRepository
 } & RepositoryAnalysisResults
 
+type CachedLookup = {
+  repository: GitHubRepository
+} & RepositoryAnalysisResults
+
 type LookupState =
   | { status: 'idle' }
   | { status: 'loading' }
@@ -56,7 +60,7 @@ type LookupState =
 
 type SuccessfulLookup = Extract<LookupState, { status: 'success' }>
 
-const repositoryAnalysisCache = new Map<string, SuccessfulLookup>()
+const repositoryAnalysisCache = new Map<string, CachedLookup>()
 
 function App() {
   const [repositoryInput, setRepositoryInput] = useState('')
@@ -85,7 +89,16 @@ function App() {
     const cachedLookup = repositoryAnalysisCache.get(cacheKey)
 
     if (cachedLookup) {
-      setLookupState(cachedLookup)
+      const loadedLookup = createRepositoryLoadedLookup(cachedLookup)
+      const successfulLookup = getSuccessfulLookup(loadedLookup)
+
+      if (successfulLookup) {
+        setLookupState(successfulLookup)
+        return
+      }
+
+      setLookupState(loadedLookup)
+      loadMissingAnalysis(cacheKey, owner, repository, loadedLookup)
       return
     }
 
@@ -101,8 +114,7 @@ function App() {
       return
     }
 
-    setLookupState({
-      status: 'repository-loaded',
+    const newCachedLookup = {
       repository: repositoryResult.repository,
       frameworkDetection: null,
       communityHealth: null,
@@ -110,36 +122,71 @@ function App() {
       pullRequestActivity: null,
       repositoryActivity: null,
       commitActivity: null,
-    })
+    }
+    const loadedLookup = createRepositoryLoadedLookup(newCachedLookup)
+    repositoryAnalysisCache.set(cacheKey, newCachedLookup)
+    setLookupState(loadedLookup)
 
-    fetchFrameworkDetection(
-      owner,
-      repository,
-      repositoryResult.repository.language,
-    ).then((frameworkDetection) =>
-      updateLookupState(cacheKey, { frameworkDetection }),
-    )
-    fetchCommunityHealth(owner, repository).then((communityHealth) =>
-      updateLookupState(cacheKey, { communityHealth }),
-    )
-    fetchGoodFirstIssues(owner, repository).then((goodFirstIssues) =>
-      updateLookupState(cacheKey, { goodFirstIssues }),
-    )
-    fetchOpenPullRequests(owner, repository).then((pullRequestActivity) =>
-      updateLookupState(cacheKey, { pullRequestActivity }),
-    )
-    fetchLatestCommit(owner, repository).then((repositoryActivity) =>
-      updateLookupState(cacheKey, { repositoryActivity }),
-    )
-    fetchCommitActivity(owner, repository).then((commitActivity) =>
-      updateLookupState(cacheKey, { commitActivity }),
-    )
+    loadMissingAnalysis(cacheKey, owner, repository, loadedLookup)
+  }
+
+  function loadMissingAnalysis(
+    cacheKey: string,
+    owner: string,
+    repository: string,
+    lookup: RepositoryLoadedLookup,
+  ) {
+    if (!lookup.frameworkDetection) {
+      fetchFrameworkDetection(owner, repository, lookup.repository.language).then(
+        (frameworkDetection) =>
+          updateLookupState(cacheKey, { frameworkDetection }),
+      )
+    }
+
+    if (!lookup.communityHealth) {
+      fetchCommunityHealth(owner, repository).then((communityHealth) =>
+        updateLookupState(cacheKey, { communityHealth }),
+      )
+    }
+
+    if (!lookup.goodFirstIssues) {
+      fetchGoodFirstIssues(owner, repository).then((goodFirstIssues) =>
+        updateLookupState(cacheKey, { goodFirstIssues }),
+      )
+    }
+
+    if (!lookup.pullRequestActivity) {
+      fetchOpenPullRequests(owner, repository).then((pullRequestActivity) =>
+        updateLookupState(cacheKey, { pullRequestActivity }),
+      )
+    }
+
+    if (!lookup.repositoryActivity) {
+      fetchLatestCommit(owner, repository).then((repositoryActivity) =>
+        updateLookupState(cacheKey, { repositoryActivity }),
+      )
+    }
+
+    if (!lookup.commitActivity) {
+      fetchCommitActivity(owner, repository).then((commitActivity) =>
+        updateLookupState(cacheKey, { commitActivity }),
+      )
+    }
   }
 
   function updateLookupState(
     cacheKey: string,
     updates: Partial<RepositoryAnalysisResults>,
   ) {
+    const cachedLookup = repositoryAnalysisCache.get(cacheKey)
+
+    if (!cachedLookup) {
+      return
+    }
+
+    const updatedCachedLookup = { ...cachedLookup, ...updates }
+    repositoryAnalysisCache.set(cacheKey, updatedCachedLookup)
+
     setLookupState((currentState) => {
       if (currentState.status !== 'repository-loaded') {
         return currentState
@@ -148,15 +195,7 @@ function App() {
       const updatedLookup = { ...currentState, ...updates }
       const successfulLookup = getSuccessfulLookup(updatedLookup)
 
-      if (!successfulLookup) {
-        return updatedLookup
-      }
-
-      if (isCompleteLookup(successfulLookup)) {
-        repositoryAnalysisCache.set(cacheKey, successfulLookup)
-      }
-
-      return successfulLookup
+      return successfulLookup || updatedLookup
     })
   }
 
@@ -238,6 +277,25 @@ function getRepositoryCacheKey(owner: string, repository: string) {
   return `${owner.toLowerCase()}/${repository.toLowerCase()}`
 }
 
+function createRepositoryLoadedLookup(
+  cachedLookup: CachedLookup,
+): RepositoryLoadedLookup {
+  return {
+    status: 'repository-loaded',
+    repository: cachedLookup.repository,
+    frameworkDetection: getReusableResult(cachedLookup.frameworkDetection),
+    communityHealth: getReusableResult(cachedLookup.communityHealth),
+    goodFirstIssues: getReusableResult(cachedLookup.goodFirstIssues),
+    pullRequestActivity: getReusableResult(cachedLookup.pullRequestActivity),
+    repositoryActivity: getReusableResult(cachedLookup.repositoryActivity),
+    commitActivity: getReusableResult(cachedLookup.commitActivity),
+  }
+}
+
+function getReusableResult<T extends { status: string }>(result: T | null) {
+  return result && result.status !== 'unavailable' ? result : null
+}
+
 function getSuccessfulLookup(
   lookup: RepositoryLoadedLookup,
 ): SuccessfulLookup | null {
@@ -262,17 +320,6 @@ function getSuccessfulLookup(
     repositoryActivity: lookup.repositoryActivity,
     commitActivity: lookup.commitActivity,
   }
-}
-
-function isCompleteLookup(lookup: SuccessfulLookup) {
-  return [
-    lookup.frameworkDetection,
-    lookup.communityHealth,
-    lookup.goodFirstIssues,
-    lookup.pullRequestActivity,
-    lookup.repositoryActivity,
-    lookup.commitActivity,
-  ].every((result) => result.status !== 'unavailable')
 }
 
 function getRepositoryLookupErrorMessage(
